@@ -1,0 +1,1249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TanStack Query PR 11305 explanation</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --surface: #f6f7f9;
+        --text: #1c2024;
+        --muted: #60646c;
+        --border: #d7dbdf;
+        --accent: #3b6cf6;
+        --accent-soft: #e8eefc;
+        --edge: #b5620a;
+        --edge-soft: #fbefe1;
+        --ok: #1a7f47;
+        --ok-soft: #e4f3ea;
+        --bad: #c62a3b;
+        --bad-soft: #fbe7e9;
+        --measure: 68ch;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #16181b;
+          --surface: #1f2226;
+          --text: #eceef0;
+          --muted: #9ba1a6;
+          --border: #33383d;
+          --accent: #7aa2ff;
+          --accent-soft: #1e2740;
+          --edge: #e08c3a;
+          --edge-soft: #2e2517;
+          --ok: #57c98b;
+          --ok-soft: #17281d;
+          --bad: #f07178;
+          --bad-soft: #2c1a1c;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          17px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 2.5rem;
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem 6rem;
+      }
+      nav.toc {
+        position: sticky;
+        top: 2.5rem;
+        align-self: start;
+        font-size: 0.9rem;
+      }
+      nav.toc strong {
+        display: block;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.6rem;
+      }
+      nav.toc ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      nav.toc li {
+        margin: 0.35rem 0;
+      }
+      nav.toc a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+      nav.toc a:hover {
+        color: var(--accent);
+      }
+      main {
+        min-width: 0;
+      }
+      main > header {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1.25rem;
+        margin-bottom: 2rem;
+      }
+      main > header h1 {
+        font-size: 1.9rem;
+        line-height: 1.2;
+        margin: 0 0 0.6rem;
+      }
+      main > header .lead {
+        color: var(--muted);
+        margin: 0;
+        max-width: var(--measure);
+      }
+      section {
+        margin-bottom: 3.5rem;
+      }
+      section h2 {
+        font-size: 1.4rem;
+        margin: 0 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--border);
+      }
+      section h3 {
+        font-size: 1.05rem;
+        margin: 2rem 0 0.6rem;
+      }
+      section p,
+      section ul,
+      section ol {
+        max-width: var(--measure);
+      }
+      li {
+        margin: 0.3rem 0;
+      }
+      pre,
+      .code-block {
+        white-space: pre-wrap;
+        overflow-x: auto;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.9rem 1.1rem;
+        font:
+          0.86rem/1.55 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Consolas,
+          monospace;
+        tab-size: 2;
+      }
+      pre .del {
+        color: var(--bad);
+      }
+      pre .add {
+        color: var(--ok);
+      }
+      pre .hi {
+        background: var(--accent-soft);
+        border-radius: 3px;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9em;
+        background: var(--surface);
+        padding: 0.05rem 0.3rem;
+        border-radius: 4px;
+      }
+      .filename {
+        font-size: 0.78rem;
+        color: var(--muted);
+        font-family: ui-monospace, monospace;
+        margin: 1.5rem 0 0.3rem;
+      }
+      .callout {
+        background: var(--accent-soft);
+        border-left: 3px solid var(--accent);
+        border-radius: 0 6px 6px 0;
+        padding: 0.85rem 1.1rem;
+        margin: 1.5rem 0;
+        max-width: var(--measure);
+      }
+      .callout .label {
+        display: block;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+      }
+      .callout.edge {
+        background: var(--edge-soft);
+        border-left-color: var(--edge);
+      }
+      .callout.edge .label {
+        color: var(--edge);
+      }
+      details.skippable {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem 1.1rem;
+        margin: 1.25rem 0;
+      }
+      details.skippable > summary {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.92rem;
+        color: var(--muted);
+      }
+      details.skippable[open] > summary {
+        margin-bottom: 0.75rem;
+      }
+      .ui-mockup {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 1.5rem 0;
+        max-width: 460px;
+        font-size: 0.85rem;
+      }
+      .ui-mockup .bar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 0.5rem 0.85rem;
+        font-weight: 600;
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+      .ui-mockup .body {
+        padding: 1.1rem 0.85rem;
+      }
+      .mock-caption {
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin: 0.3rem 0 0;
+      }
+      .dataflow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 1.5rem 0;
+      }
+      /* Each arrow travels with the node it points at. Without this, a flow
+         wider than the column wraps between an arrow and its node, leaving the
+         arrow pointing at nothing and the node stranded on the next line. */
+      .dataflow .step {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .dataflow .node {
+        background: var(--accent-soft);
+        border: 1px solid var(--accent);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 0.6rem 0.9rem;
+        font-size: 0.85rem;
+        text-align: center;
+        max-width: 175px;
+      }
+      .dataflow .node.terminal {
+        background: var(--surface);
+        border-color: var(--border);
+      }
+      .dataflow .node.pass {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .dataflow .node.fail {
+        background: var(--bad-soft);
+        border-color: var(--bad);
+      }
+      .dataflow .arrow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.72rem;
+        min-width: 96px;
+      }
+      .dataflow .arrow .line {
+        width: 100%;
+        border-top: 2px solid var(--border);
+        position: relative;
+      }
+      .dataflow .arrow .line::after {
+        content: "\25B6";
+        position: absolute;
+        right: -2px;
+        top: -0.72em;
+        color: var(--border);
+        font-size: 0.7rem;
+      }
+      .dataflow .arrow .data {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 0.05rem 0.35rem;
+        margin-bottom: 0.2rem;
+        font-family: ui-monospace, monospace;
+      }
+      .flow-label {
+        font-size: 0.8rem;
+        color: var(--muted);
+        font-weight: 600;
+        margin: 1.25rem 0 0.25rem;
+      }
+      table.vals {
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+        font-size: 0.86rem;
+        width: 100%;
+        max-width: 560px;
+      }
+      table.vals th,
+      table.vals td {
+        border: 1px solid var(--border);
+        padding: 0.4rem 0.65rem;
+        text-align: left;
+      }
+      table.vals th {
+        background: var(--surface);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+      }
+      table.vals td.no {
+        background: var(--bad-soft);
+      }
+      table.vals td.yes {
+        background: var(--ok-soft);
+      }
+      .mermaid {
+        margin: 1.75rem 0;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1rem;
+        overflow-x: auto;
+        white-space: pre;
+        font-family: ui-monospace, monospace;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .quiz-question {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1.1rem 1.25rem;
+        margin: 1.5rem 0;
+        max-width: var(--measure);
+      }
+      .quiz-question > p.q {
+        font-weight: 600;
+        margin: 0 0 0.85rem;
+      }
+      .quiz-option {
+        display: block;
+        width: 100%;
+        text-align: left;
+        background: var(--bg);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 0.6rem 0.8rem;
+        margin-bottom: 0.5rem;
+        font: inherit;
+        font-size: 0.92rem;
+        cursor: pointer;
+      }
+      .quiz-option:hover:not(:disabled) {
+        border-color: var(--accent);
+      }
+      .quiz-option.correct {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .quiz-option.incorrect {
+        background: var(--bad-soft);
+        border-color: var(--bad);
+      }
+      .quiz-option:disabled {
+        cursor: default;
+      }
+      .quiz-feedback {
+        display: none;
+        font-size: 0.88rem;
+        padding: 0.6rem 0.8rem;
+        border-radius: 7px;
+        margin-top: 0.3rem;
+      }
+      .quiz-feedback.show {
+        display: block;
+      }
+      .quiz-feedback.ok {
+        background: var(--ok-soft);
+      }
+      .quiz-feedback.bad {
+        background: var(--edge-soft);
+      }
+      @media (max-width: 800px) {
+        .layout {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 1rem;
+          padding: 1.25rem 1.1rem 4rem;
+        }
+        nav.toc {
+          position: static;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 0.75rem 1rem;
+        }
+        body {
+          font-size: 16px;
+        }
+        main > header h1 {
+          font-size: 1.6rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <nav class="toc">
+        <strong>Contents</strong>
+        <ol>
+          <li><a href="#background">Background</a></li>
+          <li><a href="#intuition">Intuition</a></li>
+          <li><a href="#code">Code walkthrough</a></li>
+          <li><a href="#quiz">Quiz</a></li>
+        </ol>
+      </nav>
+
+      <main>
+        <header>
+          <h1>The error that was too falsy to throw</h1>
+          <p class="lead">
+            TanStack Query
+            <a
+              href="https://github.com/TanStack/query/pull/11305"
+              >pull request 11305</a
+            >
+            deletes seven characters from one line. Those seven characters were
+            deciding that some errors did not count.
+          </p>
+        </header>
+
+        <section id="background">
+          <h2>Background</h2>
+
+          <details class="skippable">
+            <summary>
+              New to React Query or to error boundaries? Expand for the deeper
+              background.
+            </summary>
+            <p>
+              React Query fetches data for you. You give it a key and a function
+              that returns a promise, and it gives you back an object describing
+              the state of that fetch:
+              <code>isPending</code>, <code>isError</code>,
+              <code>data</code>, <code>error</code>.
+            </p>
+            <pre>const { data, isError, error } = useQuery({
+  queryKey: ['user', 7],
+  queryFn: () =&gt; fetch('/api/user/7').then((r) =&gt; r.json()),
+})</pre>
+            <p>
+              By default a failure is just state. Your component checks
+              <code>isError</code> and renders whatever it likes. That is fine
+              for one widget. Across forty it is tiresome, because every
+              component grows the same error branch.
+            </p>
+            <p>
+              React offers another way. An
+              <em>error boundary</em> is a component that catches an exception
+              thrown by anything below it during render, and shows a fallback
+              instead of a blank screen. One boundary can cover a whole page.
+            </p>
+            <p>
+              To connect the two, React Query takes an option called
+              <code>throwOnError</code>. Set it, and a failed query stops being
+              quiet state and instead throws during render, where the nearest
+              boundary catches it. The component no longer needs an error
+              branch. That is the feature this change is about.
+            </p>
+            <p>
+              One last piece of vocabulary. JavaScript calls a value
+              <em>falsy</em> when it converts to <code>false</code> in a
+              boolean test. There are seven:
+              <code>false</code>, <code>0</code>, <code>-0</code>,
+              <code>0n</code>, <code>''</code>, <code>null</code>, and
+              <code>undefined</code>. Everything else is truthy. This
+              distinction drives everything below.
+            </p>
+          </details>
+
+          <p>
+            The library exposes several hooks that share one observer.
+            <code>useQuery</code> runs a single query through a wrapper called
+            <code>useBaseQuery</code>.
+            <code>useQueries</code> runs a list of them and returns an array of
+            results. <code>useSuspenseQueries</code> is
+            <code>useQueries</code> with suspense turned on and
+            <code>throwOnError</code> fixed to a default. All three read from
+            the same observer in <code>query-core</code>, and all three decide
+            whether to throw using the same helper.
+          </p>
+
+          <p>
+            That helper is <code>getHasError</code>. It is the single place that
+            answers one question: should this result be thrown to the error
+            boundary rather than returned as state?
+          </p>
+
+          <p class="filename">packages/react-query/src/errorBoundaryUtils.ts:70-77</p>
+          <pre>return (
+  result.isError &amp;&amp;
+  !errorResetBoundary.isReset() &amp;&amp;
+  !result.isFetching &amp;&amp;
+  query &amp;&amp;
+  ((suspense &amp;&amp; result.data === undefined) ||
+    shouldThrowError(throwOnError, [result.error, query]))
+)</pre>
+
+          <p>
+            Read what it looks at. The status flag <code>result.isError</code>.
+            Whether the boundary has been reset. Whether a fetch is in flight.
+            Whether the query exists in the cache. Then either the suspense
+            condition or the user's <code>throwOnError</code> setting, resolved
+            by <code>shouldThrowError</code>.
+          </p>
+
+          <p>
+            Note what it does not look at: the error <em>value</em>. The value
+            is passed onward, at line 76, so that a user-supplied
+            <code>throwOnError</code> function can inspect it and decide. But
+            <code>getHasError</code> itself never checks whether the error is
+            truthy. It gates on <code>isError</code>, a boolean the query state
+            already owns.
+          </p>
+
+          <div class="callout">
+            <span class="label">Key concept</span>
+            <code>getHasError</code> is the decision. Everything downstream of
+            it is supposed to be execution. When a second check re-derives that
+            answer, you have two answers, and eventually they disagree.
+          </div>
+        </section>
+
+        <section id="intuition">
+          <h2>Intuition</h2>
+
+          <p>
+            Here is the shape of the bug in one sentence. A query that fails
+            with a falsy error reached the boundary from
+            <code>useQuery</code> and did not reach it from
+            <code>useQueries</code>.
+          </p>
+
+          <p>
+            Both hooks throw during render. <code>useQuery</code> throws on
+            <code>getHasError</code> and nothing else: its throw site at
+            <code>useBaseQuery.ts:127-137</code> has exactly one condition, and
+            that condition is the helper. <code>useQueries</code> throws on
+            <code>getHasError</code> <em>and</em> a truthiness check on the
+            error value the helper just ruled on. Most of the time those two
+            conditions agree, because most errors are <code>Error</code> objects
+            and every object is truthy. So the second check does no visible harm.
+          </p>
+
+          <p>
+            It stops being harmless the moment something rejects with a falsy
+            value. That is not exotic. <code>Promise.reject()</code> with no
+            argument rejects with <code>undefined</code>, and a bare
+            <code>reject()</code> in a hand-rolled promise does the same.
+          </p>
+
+          <table class="vals">
+            <tr>
+              <th>What the queryFn rejects with</th>
+              <th>getHasError</th>
+              <th>Old guard passed</th>
+              <th>Boundary shown</th>
+            </tr>
+            <tr>
+              <td><code>new Error('nope')</code></td>
+              <td class="yes">true</td>
+              <td class="yes">yes</td>
+              <td class="yes">yes</td>
+            </tr>
+            <tr>
+              <td><code>'nope'</code></td>
+              <td class="yes">true</td>
+              <td class="yes">yes</td>
+              <td class="yes">yes</td>
+            </tr>
+            <tr>
+              <td><code>Promise.reject()</code></td>
+              <td class="yes">true</td>
+              <td class="no">no</td>
+              <td class="no">no</td>
+            </tr>
+            <tr>
+              <td><code>null</code></td>
+              <td class="yes">true</td>
+              <td class="no">no</td>
+              <td class="no">no</td>
+            </tr>
+            <tr>
+              <td><code>0</code></td>
+              <td class="yes">true</td>
+              <td class="no">no</td>
+              <td class="no">no</td>
+            </tr>
+            <tr>
+              <td><code>''</code></td>
+              <td class="yes">true</td>
+              <td class="no">no</td>
+              <td class="no">no</td>
+            </tr>
+          </table>
+
+          <p>
+            Every row has <code>getHasError</code> returning true. The library
+            agreed, six times out of six, that the result should be thrown. In
+            four of them it was not. The only thing separating the two groups is
+            whether the rejected value happens to be truthy.
+          </p>
+
+          <h3>What the developer saw</h3>
+
+          <p>
+            Not a crash. Something worse than a crash, because a crash tells you
+            where to look. The component rendered as though nothing had
+            happened.
+          </p>
+
+          <div class="ui-mockup">
+            <div class="bar">Expected, and what useQuery does</div>
+            <div class="body">Something went wrong. Try again.</div>
+          </div>
+          <p class="mock-caption">
+            The boundary catches the throw and renders its fallback.
+          </p>
+
+          <div class="ui-mockup">
+            <div class="bar">Actual, from useQueries</div>
+            <div class="body"><span style="color: var(--muted)">No results found.</span></div>
+          </div>
+          <p class="mock-caption">
+            No throw, so no fallback. The component runs its normal path with
+            <code>data</code> undefined, and renders its empty state. The
+            failure is now indistinguishable from success with nothing in it.
+          </p>
+
+          <h3>Following one value through</h3>
+
+          <p>
+            Take <code>queryFn: () =&gt; Promise.reject()</code> with
+            <code>throwOnError: true</code> and <code>retry: false</code>. The
+            rejection value is <code>undefined</code>. Watch it move.
+          </p>
+
+          <p class="flow-label">Before the fix</p>
+          <div class="dataflow">
+            <div class="node terminal">queryFn rejects</div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">undefined</span><span class="line"></span>
+              </div>
+              <div class="node">
+                query state<br /><code>isError: true</code>
+              </div>
+            </div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">result</span><span class="line"></span>
+              </div>
+              <div class="node pass">getHasError<br />true</div>
+            </div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">?.error</span><span class="line"></span>
+              </div>
+              <div class="node fail">undefined<br />falsy, no throw</div>
+            </div>
+          </div>
+
+          <p class="flow-label">After the fix</p>
+          <div class="dataflow">
+            <div class="node terminal">queryFn rejects</div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">undefined</span><span class="line"></span>
+              </div>
+              <div class="node">
+                query state<br /><code>isError: true</code>
+              </div>
+            </div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">result</span><span class="line"></span>
+              </div>
+              <div class="node pass">getHasError<br />true</div>
+            </div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">found a result</span
+                ><span class="line"></span>
+              </div>
+              <div class="node pass">throw undefined<br />boundary catches</div>
+            </div>
+          </div>
+
+          <p>
+            The last step looks wrong at first.
+            <code>throw undefined</code> is legal.
+            <code>throw</code> in JavaScript accepts any value, not only an
+            <code>Error</code>, and React hands whatever was thrown to the
+            nearest boundary. Throwing <code>undefined</code> is exactly as
+            valid as throwing an <code>Error</code>, and the fallback renders
+            either way. The test added in this pull request proves it.
+          </p>
+
+          <p>
+            The same story, with the timing made explicit. Note where the guard
+            sits: after the decision, not before it.
+          </p>
+
+          <pre class="mermaid">sequenceDiagram
+    autonumber
+    participant F as queryFn
+    participant O as QueryObserver
+    participant U as useQueries
+    participant G as getHasError
+    participant B as ErrorBoundary
+
+    F--&gt;&gt;O: reject(undefined)
+    O-&gt;&gt;O: set isError true and error undefined
+    U-&gt;&gt;O: getOptimisticResult()
+    O--&gt;&gt;U: array of results
+    U-&gt;&gt;G: getHasError(result 0)
+    G--&gt;&gt;U: true. this one should throw
+    Note over U: the guard sits here.&lt;br/&gt;asking result.error again&lt;br/&gt;overrules getHasError
+    U-&gt;&gt;B: throw result.error
+    B-&gt;&gt;B: render the fallback</pre>
+
+          <div class="callout edge">
+            <span class="label">Edge case</span>
+            The guard was not pointless. Something has to stand there.
+            <code>Array.prototype.find</code> returns
+            <code>QueryObserverResult | undefined</code>, so you cannot reach
+            <code>.error</code> without first establishing that you found
+            anything. The fix keeps that null check and drops only the second
+            job the old expression had taken on. One check, one question.
+          </div>
+        </section>
+
+        <section id="code">
+          <h2>Code walkthrough</h2>
+
+          <p>
+            The flow, end to end: a queryFn rejects, the observer records the
+            failure, <code>getHasError</code> decides it should be thrown,
+            <code>useQueries</code> throws it, the boundary renders a fallback.
+            Five files changed; one of them is the fix and three are tests.
+          </p>
+
+          <h3>1. The decision, unchanged</h3>
+
+          <p>
+            Nothing in this pull request touches
+            <code>getHasError</code> or <code>shouldThrowError</code>. They are
+            here because you cannot see what the fix does without them.
+            <code>shouldThrowError</code> is how a boolean or a function
+            <code>throwOnError</code> collapses into one answer.
+          </p>
+
+          <p class="filename">packages/query-core/src/utils.ts:470-480</p>
+          <pre>export function shouldThrowError&lt;T extends (...args: Array&lt;any&gt;) =&gt; boolean&gt;(
+  throwOnError: boolean | T | undefined,
+  params: Parameters&lt;T&gt;,
+): boolean {
+  // Allow throwOnError function to override throwing behavior on a per-error basis
+  if (typeof throwOnError === 'function') {
+    return throwOnError(...params)
+  }
+
+  return !!throwOnError
+}</pre>
+
+          <p>
+            A user-supplied function does get the error value, at
+            <code>errorBoundaryUtils.ts:76</code>, and may refuse the throw on
+            that basis. Note where that happens: inside
+            <code>getHasError</code>, folded into the one decision, rather than
+            as a second gate after it.
+          </p>
+
+          <h3>2. The throw site, and the change</h3>
+
+          <p>
+            <code>useQueries</code> asks the observer for every result, then
+            looks for the first one that should throw. The results arrive as
+            <code>optimisticResult</code>, the observer's best current answer
+            for each query, computed synchronously during render so the hook has
+            something to return before any fetch settles.
+          </p>
+
+          <p class="filename">packages/react-query/src/useQueries.ts:310-328</p>
+          <pre>const firstSingleResultWhichShouldThrow = optimisticResult.find(
+  (result, index) =&gt; {
+    const query = defaultedQueries[index]
+    return (
+      query &amp;&amp;
+      getHasError({
+        result,
+        errorResetBoundary,
+        throwOnError: query.throwOnError,
+        query: client.getQueryCache().get(query.queryHash),
+        suspense: query.suspense,
+      })
+    )
+  },
+)
+
+<span class="del">-if (firstSingleResultWhichShouldThrow?.error) {</span>
+<span class="add">+if (firstSingleResultWhichShouldThrow) {</span>
+   throw firstSingleResultWhichShouldThrow.error
+ }</pre>
+
+          <p>
+            The variable name states the intent plainly. It holds the first
+            result which should throw. By the time the <code>if</code> runs,
+            <code>getHasError</code> has already settled the question. Asking
+            <code>?.error</code> re-opens it, and answers it with a weaker check
+            than the one <code>getHasError</code> just applied.
+          </p>
+
+          <p>
+            The predicate explains why <code>find</code> forces a check at all.
+            The monorepo's root <code>tsconfig.json</code> sets
+            <code>noUncheckedIndexedAccess</code>, so
+            <code>defaultedQueries[index]</code> is possibly
+            <code>undefined</code>. The <code>query &amp;&amp;</code> guard on
+            the third line covers that. Then <code>find</code> hands back either
+            a result or <code>undefined</code>, and that is the null check the
+            surviving condition performs.
+          </p>
+
+          <h3>3. The reference implementation</h3>
+
+          <p>
+            <code>useQuery</code> routes through
+            <code>useBaseQuery</code>. This is the comparison that shows the bug
+            is asymmetric: <code>useQuery</code> never had it.
+          </p>
+
+          <p class="filename">packages/react-query/src/useBaseQuery.ts:126-137</p>
+          <pre>// Handle error boundary
+if (
+  getHasError({
+    result,
+    errorResetBoundary,
+    throwOnError: defaultedOptions.throwOnError,
+    query,
+    suspense: defaultedOptions.suspense,
+  })
+) {
+  throw result.error
+}</pre>
+
+          <p>
+            One condition, and it is the helper. No truthiness check on the
+            value. No null check either: <code>result</code> is a single object
+            from the observer, not the outcome of a search, so nothing here can
+            be <code>undefined</code>.
+          </p>
+
+          <p>
+            This is what grounds the fix. The change brings
+            <code>useQueries</code> into line with the behavior
+            <code>useQuery</code> has always had, so nobody had to decide afresh
+            how falsy errors ought to work. The pull request author says as much:
+            the new <code>useQuery</code> test is labeled "reference behaviour,
+            passes before and after".
+          </p>
+
+          <h3>4. Where the fix travels for free</h3>
+
+          <p class="filename">packages/react-query/src/useSuspenseQueries.ts:189-211</p>
+          <pre>export function useSuspenseQueries(options: any, queryClient?: QueryClient) {
+  return useQueries(
+    {
+      ...options,
+      queries: options.queries.map((query: any) =&gt; {
+        // elided: a development-mode console.error for skipToken misuse
+        return {
+          ...query,
+          suspense: true,
+          throwOnError: defaultThrowOnError,
+          enabled: true,
+          placeholderData: undefined,
+        }
+      }),
+    },
+    queryClient,
+  )
+}</pre>
+
+          <p>
+            <code>useSuspenseQueries</code> is a thin wrapper. It rewrites each
+            query's options and delegates. It has no throw site of its own, so
+            it inherited the bug and inherits the fix, with no edit to this
+            file. That is why the changeset names two hooks while the diff
+            touches one.
+          </p>
+
+          <h3>5. The tests</h3>
+
+          <p>
+            Three test files, one each for
+            <code>useQuery</code>, <code>useQueries</code>, and
+            <code>useSuspenseQueries</code>. The order matters more than the
+            count.
+          </p>
+
+          <p class="filename">packages/react-query/src/__tests__/useQuery.test.tsx:2776</p>
+          <pre>it('should throw error if queryFn rejects with a falsy error and throwOnError is in use', ...</pre>
+
+          <p>
+            That one passes before the fix. It catches no regression in
+            <code>useQuery</code>. It records the behavior the other two tests
+            must match, so a reader six months from now can check the reference
+            instead of assuming it.
+          </p>
+
+          <p class="filename">packages/react-query/src/__tests__/useQueries.test.tsx:287-289</p>
+          <pre>queryFn: () =&gt; Promise.reject(),
+retry: false,
+throwOnError: true,</pre>
+
+          <p>
+            Each of the three options does real work.
+            <code>Promise.reject()</code> supplies the falsy value.
+            <code>throwOnError: true</code> asks for the boundary at all.
+            <code>retry: false</code> stops the query retrying, which matters
+            twice over: <code>getHasError</code> refuses to throw while a fetch
+            is in flight, at <code>errorBoundaryUtils.ts:73</code>, and a
+            retrying query still reports <code>pending</code> status, so
+            <code>result.isError</code> would be false too. The test advances
+            fake timers by zero, which would never clear a retry backoff. Remove
+            any one option and the test passes for the wrong reason.
+          </p>
+
+          <p>
+            The <code>useSuspenseQueries</code> test at
+            <code>useSuspenseQueries.test.tsx:580</code> sets no
+            <code>throwOnError</code>, because suspense supplies its own
+            default, and rejects after a delay so the assertion can watch the
+            fallback replace the loading state.
+          </p>
+
+          <p class="filename">.changeset/olive-donuts-shave.md</p>
+          <pre>---
+'@tanstack/react-query': patch
+---
+
+fix(react-query): throw falsy errors from `useQueries` and `useSuspenseQueries` to the error boundary</pre>
+
+          <p>
+            Marked <code>patch</code>, and that is not obvious. Code that
+            silently swallowed a falsy error will now see it thrown, so someone
+            somewhere gets a fallback where they used to get an empty state.
+            The changeset gives no rationale for the label, so this next part is
+            my reading rather than the maintainers': a patch looks right here,
+            because the documented option never promised to swallow falsy errors
+            and <code>useQuery</code> already threw them.
+          </p>
+
+          <div class="callout">
+            <span class="label">The transferable part</span>
+            A guard that re-derives a decision already made upstream is a
+            latent bug. It stays latent as long as the two conditions agree.
+            When you find yourself writing <code>if (x?.someField)</code>, ask
+            which thing you need: <code>x</code> to exist, or
+            <code>someField</code> to be truthy. If it is the first, write that
+            instead. One day a legitimate value will be falsy, and the
+            difference will surface as a bug nobody can see.
+          </div>
+        </section>
+
+        <section id="quiz">
+          <h2>Quiz</h2>
+
+          <p>
+            Five questions about why the change is shaped the way it is. Click
+            an option to see the answer.
+          </p>
+
+          <div class="quiz-question">
+            <p class="q">
+              1. The fix leaves <code>if (firstSingleResultWhichShouldThrow)</code>.
+              A reviewer proposes
+              <code>if (firstSingleResultWhichShouldThrow !== undefined)</code>
+              as clearer about its intent. Does that change what the code does?
+            </p>
+            <button class="quiz-option">
+              Yes. The truthy form skips a result object that is itself falsy,
+              which the explicit comparison would correctly admit.
+            </button>
+            <button class="quiz-option" data-correct>
+              No. <code>find</code> returns either a result object or
+              <code>undefined</code>, and every object is truthy, so both
+              conditions accept the same values. It is a readability choice.
+            </button>
+            <button class="quiz-option">
+              Yes. <code>find</code> returns <code>null</code> for a hole in a
+              sparse array, and <code>!== undefined</code> would let that
+              through to the <code>throw</code>.
+            </button>
+            <div class="quiz-feedback" role="status">
+              This is the distinction the original bug turned on, now harmless.
+              Once the condition checks the result object instead of a field on
+              it, truthiness and an explicit <code>undefined</code> comparison
+              cannot diverge, because no object is falsy. That was not true of
+              <code>?.error</code>, where the field could be falsy while the
+              object itself was fine. And <code>find</code> returns
+              <code>undefined</code> for no match, never <code>null</code>.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              2. Before the fix, a component calls
+              <code>useQueries</code> with one query:
+              <code>queryFn: () =&gt; Promise.reject(0)</code>,
+              <code>retry: false</code>, <code>throwOnError: true</code>, inside
+              an error boundary. What does the user see?
+            </p>
+            <button class="quiz-option">
+              The boundary's fallback, because <code>throwOnError: true</code>
+              is explicit and takes precedence.
+            </button>
+            <button class="quiz-option">
+              A <code>TypeError</code> from reading <code>.error</code> of
+              <code>undefined</code>.
+            </button>
+            <button class="quiz-option" data-correct>
+              The component's own render output, with no data and no fallback.
+              The result reports <code>isError: true</code>, but nothing throws.
+            </button>
+            <button class="quiz-option">
+              A permanent loading state, because the query never settles.
+            </button>
+            <div class="quiz-feedback" role="status">
+              <code>0</code> is falsy, so the old guard skipped the throw. The
+              query did settle and did record the error; the component simply
+              never heard about it and rendered its normal path. That silence is
+              what made this hard to notice.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              3. <code>useQuery</code> never had this bug. Why not?
+            </p>
+            <button class="quiz-option" data-correct>
+              <code>useBaseQuery</code> throws on the
+              <code>getHasError</code> call alone. It adds no second condition
+              on the error value.
+            </button>
+            <button class="quiz-option">
+              <code>useQuery</code> wraps a falsy rejection in an
+              <code>Error</code> before storing it, so the value is always
+              truthy by the time it is checked.
+            </button>
+            <button class="quiz-option">
+              <code>useQuery</code> uses a different code path that checks
+              <code>result.isError</code> instead of calling
+              <code>getHasError</code>.
+            </button>
+            <div class="quiz-feedback" role="status">
+              Both hooks call the same helper. They differ only in what each
+              does with the answer. <code>useQuery</code> acts on it;
+              <code>useQueries</code> added a second condition on top of it.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              4. Suppose someone reads the fixed line, decides the check is now
+              redundant since the variable is named "should throw", and
+              simplifies to
+              <code>throw firstSingleResultWhichShouldThrow.error</code> with no
+              <code>if</code>. What happens?
+            </p>
+            <button class="quiz-option">
+              Nothing observable. When <code>find</code> returns
+              <code>undefined</code> the property access short-circuits and the
+              throw is skipped.
+            </button>
+            <button class="quiz-option">
+              It throws <code>undefined</code> on every render, which the
+              boundary silently ignores since there is no error to display.
+            </button>
+            <button class="quiz-option" data-correct>
+              TypeScript rejects it, because the variable is possibly
+              <code>undefined</code>. Forced past the compiler, every render
+              with no failing query would crash on a property of
+              <code>undefined</code>.
+            </button>
+            <div class="quiz-feedback" role="status">
+              The check is doing real work: it distinguishes "found one" from
+              "found none", and the common case is none. Property access on
+              <code>undefined</code> does not short-circuit; only optional
+              chaining does, which is precisely the conflation the fix
+              untangled.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              5. An alternative fix: leave <code>useQueries</code> alone and
+              change <code>getHasError</code> to require
+              <code>result.error != null</code> alongside
+              <code>result.isError</code>. Does that solve the reported problem?
+            </p>
+            <button class="quiz-option">
+              Yes, and it is the better fix, because it puts the rule in the one
+              shared place instead of at one call site.
+            </button>
+            <button class="quiz-option" data-correct>
+              No. It moves the same value check one layer earlier, still drops
+              <code>null</code> and <code>undefined</code> rejections, and now
+              breaks <code>useQuery</code> too, since both hooks share the
+              helper.
+            </button>
+            <button class="quiz-option">
+              Yes. <code>!= null</code> admits <code>0</code> and
+              <code>''</code>, so every value in the reported bug now reaches the
+              boundary.
+            </button>
+            <div class="quiz-feedback" role="status">
+              The third option is half right, and that is what makes it
+              tempting: <code>!= null</code> does admit <code>0</code> and
+              <code>''</code>. It still rejects the
+              <code>Promise.reject()</code> case, which is the case the bug
+              report was about. The deeper problem is direction. Putting the
+              value check in the shared helper spreads the defect to the hook
+              that was working, instead of removing it from the hook that was
+              not.
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      document.querySelectorAll(".quiz-question").forEach(function (question) {
+        var feedback = question.querySelector(".quiz-feedback");
+
+        // Shuffle the options on every load, so the correct answer's position is
+        // random and a reader cannot fall into answering by position. Each option
+        // is re-inserted before the feedback block, which has to stay last.
+        var shuffled = Array.prototype.slice.call(
+          question.querySelectorAll(".quiz-option"),
+        );
+        for (var i = shuffled.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var swap = shuffled[i];
+          shuffled[i] = shuffled[j];
+          shuffled[j] = swap;
+        }
+        shuffled.forEach(function (option) {
+          question.insertBefore(option, feedback);
+        });
+
+        var options = question.querySelectorAll(".quiz-option");
+        options.forEach(function (option) {
+          option.addEventListener("click", function () {
+            var isCorrect = option.hasAttribute("data-correct");
+            options.forEach(function (other) {
+              other.disabled = true;
+              if (other.hasAttribute("data-correct"))
+                other.classList.add("correct");
+            });
+            if (!isCorrect) option.classList.add("incorrect");
+            feedback.classList.add("show", isCorrect ? "ok" : "bad");
+            feedback.textContent =
+              (isCorrect ? "Correct. " : "Not quite. ") + feedback.textContent;
+          });
+        });
+      });
+    </script>
+    <script>
+      // Mermaid loads without blocking: the page scripts above run first, and a slow
+      // or blocked CDN never holds up the quiz or the rest of the page. This is the
+      // only permitted external request, and it fires only when a .mermaid block is
+      // present. Leave it in place; it is a no-op on pages without a diagram.
+      (function () {
+        var blocks = document.querySelectorAll(".mermaid");
+        if (!blocks.length) return;
+
+        // mermaid.run() replaces each block's text with an SVG, so the source is
+        // gone after the first render. Stash it, because a theme change has to
+        // parse it again.
+        blocks.forEach(function (block) {
+          block.dataset.source = block.textContent;
+        });
+
+        var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+        function render() {
+          blocks.forEach(function (block) {
+            block.removeAttribute("data-processed");
+            block.textContent = block.dataset.source;
+          });
+          try {
+            window.mermaid.initialize({
+              startOnLoad: false,
+              theme: darkQuery.matches ? "dark" : "default",
+            });
+          } catch (e) {}
+          Promise.resolve(window.mermaid.run({ nodes: blocks })).catch(
+            function () {},
+          );
+        }
+
+        var s = document.createElement("script");
+        s.src =
+          "https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js";
+        s.integrity =
+          "sha384-T/0lMUdJpd2S1ZHtRiofG3htU3xPCrFVeAQ1UUE2TJwlEJSV5NUwn30kP28n238E";
+        s.crossOrigin = "anonymous";
+        s.onload = function () {
+          render();
+          // Re-render when the reader switches system theme, so the diagram does
+          // not stay light on a dark page.
+          if (darkQuery.addEventListener)
+            darkQuery.addEventListener("change", render);
+        };
+        document.head.appendChild(s);
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1369 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>uPortal PR 2924 explanation</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --surface: #f6f7f9;
+        --text: #1c2024;
+        --muted: #60646c;
+        --border: #d7dbdf;
+        --accent: #3b6cf6;
+        --accent-soft: #e8eefc;
+        --edge: #b5620a;
+        --edge-soft: #fbefe1;
+        --ok: #1a7f47;
+        --ok-soft: #e4f3ea;
+        --bad: #c62a3b;
+        --bad-soft: #fbe7e9;
+        --measure: 68ch;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #16181b;
+          --surface: #1f2226;
+          --text: #eceef0;
+          --muted: #9ba1a6;
+          --border: #33383d;
+          --accent: #7aa2ff;
+          --accent-soft: #1e2740;
+          --edge: #e08c3a;
+          --edge-soft: #2e2517;
+          --ok: #57c98b;
+          --ok-soft: #17281d;
+          --bad: #f07178;
+          --bad-soft: #2c1a1c;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          17px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 2.5rem;
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem 6rem;
+      }
+      nav.toc {
+        position: sticky;
+        top: 2.5rem;
+        align-self: start;
+        font-size: 0.9rem;
+      }
+      nav.toc strong {
+        display: block;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.6rem;
+      }
+      nav.toc ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      nav.toc li {
+        margin: 0.35rem 0;
+      }
+      nav.toc a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+      nav.toc a:hover {
+        color: var(--accent);
+      }
+      main {
+        min-width: 0;
+      }
+      main > header {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1.25rem;
+        margin-bottom: 2rem;
+      }
+      main > header h1 {
+        font-size: 1.9rem;
+        line-height: 1.2;
+        margin: 0 0 0.6rem;
+      }
+      main > header .lead {
+        color: var(--muted);
+        margin: 0;
+        max-width: var(--measure);
+      }
+      section {
+        margin-bottom: 3.5rem;
+      }
+      section h2 {
+        font-size: 1.4rem;
+        margin: 0 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--border);
+      }
+      section h3 {
+        font-size: 1.05rem;
+        margin: 2rem 0 0.6rem;
+      }
+      section p,
+      section ul,
+      section ol {
+        max-width: var(--measure);
+      }
+      li {
+        margin: 0.3rem 0;
+      }
+      pre,
+      .code-block {
+        white-space: pre-wrap;
+        overflow-x: auto;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.9rem 1.1rem;
+        font:
+          0.86rem/1.55 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Consolas,
+          monospace;
+        tab-size: 2;
+      }
+      pre .del {
+        color: var(--bad);
+      }
+      pre .add {
+        color: var(--ok);
+      }
+      pre .hi {
+        background: var(--accent-soft);
+        border-radius: 3px;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9em;
+        background: var(--surface);
+        padding: 0.05rem 0.3rem;
+        border-radius: 4px;
+      }
+      .filename {
+        font-size: 0.78rem;
+        color: var(--muted);
+        font-family: ui-monospace, monospace;
+        margin: 1.5rem 0 0.3rem;
+      }
+      table.vals {
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+        font-size: 0.86rem;
+        width: 100%;
+        max-width: 620px;
+      }
+      table.vals th,
+      table.vals td {
+        border: 1px solid var(--border);
+        padding: 0.4rem 0.65rem;
+        text-align: left;
+      }
+      table.vals th {
+        background: var(--surface);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+      }
+      table.vals td.yes {
+        background: var(--ok-soft);
+      }
+      table.vals td.no {
+        background: var(--bad-soft);
+      }
+      table.vals td.warn {
+        background: var(--edge-soft);
+      }
+      .callout {
+        background: var(--accent-soft);
+        border-left: 3px solid var(--accent);
+        border-radius: 0 6px 6px 0;
+        padding: 0.85rem 1.1rem;
+        margin: 1.5rem 0;
+        max-width: var(--measure);
+      }
+      .callout .label {
+        display: block;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+      }
+      .callout.edge {
+        background: var(--edge-soft);
+        border-left-color: var(--edge);
+      }
+      .callout.edge .label {
+        color: var(--edge);
+      }
+      details.skippable {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem 1.1rem;
+        margin: 1.25rem 0;
+      }
+      details.skippable > summary {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.92rem;
+        color: var(--muted);
+      }
+      details.skippable[open] > summary {
+        margin-bottom: 0.75rem;
+      }
+      .ui-mockup {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 1.5rem 0;
+        max-width: 560px;
+        font-size: 0.85rem;
+      }
+      .ui-mockup .bar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 0.5rem 0.85rem;
+        font-weight: 600;
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+      .ui-mockup .body {
+        padding: 1.1rem 0.85rem;
+        font-family: ui-monospace, monospace;
+        font-size: 0.78rem;
+        white-space: pre-wrap;
+      }
+      .mock-caption {
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin: 0.3rem 0 0;
+        max-width: var(--measure);
+      }
+      .dataflow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 1.5rem 0;
+      }
+      /* Each arrow travels with the node it points at. Without this, a flow
+         wider than the column wraps between an arrow and its node, leaving the
+         arrow pointing at nothing and the node stranded on the next line. */
+      .dataflow .step {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .dataflow .node {
+        background: var(--accent-soft);
+        border: 1px solid var(--accent);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 0.6rem 0.9rem;
+        font-size: 0.85rem;
+        text-align: center;
+        max-width: 175px;
+      }
+      .dataflow .node.terminal {
+        background: var(--surface);
+        border-color: var(--border);
+      }
+      .dataflow .node.pass {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .dataflow .node.fail {
+        background: var(--bad-soft);
+        border-color: var(--bad);
+      }
+      .dataflow .arrow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.72rem;
+        min-width: 96px;
+      }
+      .dataflow .arrow .line {
+        width: 100%;
+        border-top: 2px solid var(--border);
+        position: relative;
+      }
+      .dataflow .arrow .line::after {
+        content: "\25B6";
+        position: absolute;
+        right: -2px;
+        top: -0.72em;
+        color: var(--border);
+        font-size: 0.7rem;
+      }
+      .dataflow .arrow .data {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 0.05rem 0.35rem;
+        margin-bottom: 0.2rem;
+        font-family: ui-monospace, monospace;
+      }
+      .flow-label {
+        font-size: 0.8rem;
+        color: var(--muted);
+        font-weight: 600;
+        margin: 1.25rem 0 0.25rem;
+      }
+      .frames {
+        list-style: none;
+        padding: 0;
+        margin: 1.25rem 0;
+        max-width: 620px;
+        font-family: ui-monospace, monospace;
+        font-size: 0.82rem;
+      }
+      .frames li {
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.45rem 0.7rem;
+        margin: 0.3rem 0;
+        background: var(--surface);
+      }
+      .frames li.target {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .frames .n {
+        display: inline-block;
+        min-width: 2.2em;
+        color: var(--muted);
+      }
+      .mermaid {
+        margin: 1.75rem 0;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1rem;
+        overflow-x: auto;
+        white-space: pre;
+        font-family: ui-monospace, monospace;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .quiz-question {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1.1rem 1.25rem;
+        margin: 1.5rem 0;
+        max-width: var(--measure);
+      }
+      .quiz-question > p.q {
+        font-weight: 600;
+        margin: 0 0 0.85rem;
+      }
+      .quiz-option {
+        display: block;
+        width: 100%;
+        text-align: left;
+        background: var(--bg);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 0.6rem 0.8rem;
+        margin-bottom: 0.5rem;
+        font: inherit;
+        font-size: 0.92rem;
+        cursor: pointer;
+      }
+      .quiz-option:hover:not(:disabled) {
+        border-color: var(--accent);
+      }
+      .quiz-option.correct {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .quiz-option.incorrect {
+        background: var(--bad-soft);
+        border-color: var(--bad);
+      }
+      .quiz-option:disabled {
+        cursor: default;
+      }
+      .quiz-feedback {
+        display: none;
+        font-size: 0.88rem;
+        padding: 0.6rem 0.8rem;
+        border-radius: 7px;
+        margin-top: 0.3rem;
+      }
+      .quiz-feedback.show {
+        display: block;
+      }
+      .quiz-feedback.ok {
+        background: var(--ok-soft);
+      }
+      .quiz-feedback.bad {
+        background: var(--edge-soft);
+      }
+      @media (max-width: 800px) {
+        .layout {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 1rem;
+          padding: 1.25rem 1.1rem 4rem;
+        }
+        nav.toc {
+          position: static;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 0.75rem 1rem;
+        }
+        body {
+          font-size: 16px;
+        }
+        main > header h1 {
+          font-size: 1.6rem;
+        }
+      }
+    </style>
+  </head>
+    <body>
+    <div class="layout">
+      <nav class="toc">
+        <strong>Contents</strong>
+        <ol>
+          <li><a href="#background">Background</a></li>
+          <li><a href="#intuition">Intuition</a></li>
+          <li><a href="#code">Code walkthrough</a></li>
+          <li><a href="#quiz">Quiz</a></li>
+        </ol>
+      </nav>
+
+      <main>
+        <header>
+          <h1>A bookmark outlives the thing it points at</h1>
+          <p class="lead">
+            uPortal
+            <a href="https://github.com/uPortal-Project/uPortal/pull/2924"
+              >pull request 2924</a
+            >
+            wraps one call in a <code>try</code>/<code>catch</code> so a stale
+            URL stops returning a 500. It also deletes an
+            <code>@Ignore</code> that had been skipping 30 tests, which reaches
+            further than the fix that prompted it.
+          </p>
+        </header>
+
+        <section id="background">
+          <h2>Background</h2>
+
+          <details class="skippable">
+            <summary>
+              New to uPortal or to portlets? Expand for the deeper background.
+            </summary>
+            <p>
+              uPortal is a campus portal. A signed-in student sees one page
+              assembled from many small independent applications: a course list,
+              a calendar, an announcements feed. Each of those is a
+              <em>portlet</em>, and the portal composes them into a layout that
+              each user can rearrange.
+            </p>
+            <p>
+              A <em>portlet definition</em> is the installed application, the
+              thing an administrator adds or removes for the whole institution. A
+              <em>portlet entity</em> is one user's placed instance of it, at one
+              spot in that user's layout. So one definition has many entities.
+            </p>
+            <p>
+              A <em>portlet window</em> is the third of these, and the one this
+              change returns. It is an entity as it exists during a single
+              request, carrying the state that belongs to this render: which mode
+              the portlet is in, whether it is maximized, and the parameters
+              aimed at it. Turning an id from the URL into a window is the lookup
+              that fails here.
+            </p>
+            <p>
+              One request can involve several windows. The one the user is acting
+              on is the <em>targeted</em> window, and the others are
+              <em>delegates</em>. That distinction matters twice later, so it is
+              worth holding onto.
+            </p>
+            <p>
+              An entity is named by a string built from three parts joined with
+              underscores:
+            </p>
+            <pre>portletDefinitionId + "_" + layoutNodeId + "_" + userId</pre>
+            <p>
+              Which makes <code>27_ctf9_142032</code> readable: portlet
+              definition <code>27</code>, at layout node <code>ctf9</code>, for
+              user <code>142032</code>.
+            </p>
+            <p>
+              Those entity ids travel in the URL. When a portlet needs its own
+              parameters in a shared page, the portal prefixes them so they
+              cannot collide with anything else:
+            </p>
+            <pre>?pCa=27_ctf9_142032&amp;pP_27_ctf9_142032_implicitModel=...</pre>
+            <p>
+              <code>pCa</code> lists the entity ids present in this request, and
+              each <code>pP_</code> parameter carries an id followed by the real
+              parameter name. Here that real name is
+              <code>implicitModel</code>, a parameter one portlet reads;
+              everything before it is addressing. Turning these strings back into
+              objects is URL parsing, and it happens on the way in, before
+              anything renders.
+            </p>
+          </details>
+
+          <p>
+            The method that does that parsing is
+            <code>parsePortletParameterName</code>. It takes a raw parameter
+            name, and the set of entity ids the request declared, and returns a
+            pair: the real parameter name, and the window the parameter belongs
+            to. uPortal calls that pair a <code>Tuple</code>, whose fields are
+            named <code>first</code> and <code>second</code>.
+          </p>
+
+          <p class="filename">
+            uPortal-rendering/.../url/UrlSyntaxProviderImpl.java:894
+          </p>
+          <pre>protected Tuple&lt;String, IPortletWindowId&gt; parsePortletParameterName(
+        HttpServletRequest request, String name, Set&lt;String&gt; additionalPortletIds) {</pre>
+
+          <p>
+            Resolving the second value means turning
+            <code>27_ctf9_142032</code> into a live window. That runs through two
+            registries: a window registry, which asks an entity registry to
+            resolve the id first. The entity registry splits the string, looks up
+            the definition, and if the definition is not there, it throws.
+          </p>
+
+          <p class="filename">
+            uPortal-rendering/.../portlet/registry/PortletEntityRegistryImpl.java:757
+          </p>
+          <pre>if (portletDefinition == null) {
+    throw new IllegalArgumentException(
+            "No parent IPortletDefinition found for "
+                    + portletDefinitionIdString
+                    + " from entity id string: "
+                    + consistentEntityIdString);
+}</pre>
+
+          <p>
+            <code>IllegalArgumentException</code> is unchecked, so Java does not
+            require any caller to handle it, and nothing did. It traveled up
+            through URL parsing, out of the rendering pipeline, and into the
+            filter that sits across every request.
+          </p>
+
+          <div class="callout">
+            <span class="label">Key concept</span>
+            A URL is user-supplied input that outlives the data it names. A
+            bookmark, a browser's restored session, a link in an old email, or a
+            search engine's index can all send you an entity id for a portlet an
+            administrator removed last term. Parsing has to survive that, because
+            the person holding the stale link did nothing wrong.
+          </div>
+        </section>
+
+        <section id="intuition">
+          <h2>Intuition</h2>
+
+          <p>
+            Before the change, one missing portlet definition cost the whole
+            page. The user asked for their layout, and got an error page,
+            because a parameter belonging to one removed portlet could not be
+            resolved.
+          </p>
+
+          <div class="ui-mockup">
+            <div class="bar">Before: a bookmarked URL after portlet 27 is removed</div>
+            <div class="body">HTTP 500
+
+uPortal: unhandled exception 'No parent IPortletDefinition found
+for 27 from entity id string: 27_ctf9_142032'</div>
+          </div>
+          <p class="mock-caption">
+            The whole layout is gone, not just the missing portlet. Nothing on
+            the page told the user their bookmark was the problem.
+          </p>
+
+          <div class="ui-mockup">
+            <div class="bar">After: the same URL</div>
+            <div class="body">HTTP 200
+
+[ Courses ]  [ Calendar ]  [ Announcements ]
+
+portal log: WARN Failed to resolve portlet window id for parameter
+'pP_27_ctf9_142032_implicitModel': No parent IPortletDefinition
+found for 27. The parameter will be ignored.</div>
+          </div>
+          <p class="mock-caption">
+            The layout renders without the removed portlet, and the operator
+            gets a warning naming the parameter. The user sees a working page.
+          </p>
+
+          <h3>The shape of the fix</h3>
+
+          <p>
+            The method already had an answer for "this parameter does not belong
+            to any known window": return the parameter name with a null window
+            id. That path existed for the case where none of the declared ids
+            appear in the parameter name at all.
+          </p>
+
+          <p>
+            So the fix does not invent a new outcome. It catches the exception,
+            logs it, and lets control reach that existing fallback.
+          </p>
+
+          <p>
+            The diagram below shows the simple case, where one id fails and the
+            method falls through. The catch actually sits inside a loop over
+            every declared id, so a failure is not always the end of the attempt.
+            Step 3 of the walkthrough follows that, and it is where the detail
+            lives.
+          </p>
+
+          <p class="flow-label">What the caller receives</p>
+          <div class="dataflow">
+            <div class="node terminal">stale id in URL</div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">27_ctf9_142032</span
+                ><span class="line"></span>
+              </div>
+              <div class="node">registry lookup</div>
+            </div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">throws</span><span class="line"></span>
+              </div>
+              <div class="node fail">caught. warn logged</div>
+            </div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">falls through</span
+                ><span class="line"></span>
+              </div>
+              <div class="node pass">Tuple with null second</div>
+            </div>
+          </div>
+
+          <p>
+            The same story with the timing made explicit, and both outcomes side
+            by side.
+          </p>
+
+          <pre class="mermaid">sequenceDiagram
+    autonumber
+    actor U as Browser
+    participant G as getPortalRequestInfo
+    participant S as parsePortletParameterName
+    participant R as portletWindowRegistry
+    participant E as PortletEntityRegistryImpl
+    participant F as ExceptionLoggingFilter
+
+    U-&gt;&gt;G: GET with pCa=27_ctf9_142032
+    G-&gt;&gt;S: name = pP_27_ctf9_142032_implicitModel
+    S-&gt;&gt;R: getPortletWindowId(request. "27_ctf9_142032")
+    R-&gt;&gt;E: getPortletEntity for definition 27
+    E--)R: IllegalArgumentException. no definition 27
+    R--)S: propagates unchanged
+
+    rect rgb(251, 231, 233)
+    Note over S,F: before. nothing catches it
+    S--)G: propagates
+    G--)F: propagates
+    F-&gt;&gt;F: logger.error. then rethrow
+    F-&gt;&gt;U: HTTP 500 via /500.html
+    end
+
+    rect rgb(228, 243, 234)
+    Note over S,G: after. the catch logs and the loop moves on
+    S-&gt;&gt;S: logger.warn at line 913
+    S-&gt;&gt;S: no more ids match. fall to line 922
+    S--&gt;&gt;G: Tuple("27_ctf9_142032_implicitModel". null)
+    G-&gt;&gt;G: null window id. drop or reattribute the parameter
+    G-&gt;&gt;U: HTTP 200. layout without the deleted portlet
+    end</pre>
+
+          <div class="callout edge">
+            <span class="label">Edge case</span>
+            Look at the string in that second-to-last arrow. The success path
+            computes the parameter name at line 903, stripping the prefix
+            <em>and</em> the entity id, which yields
+            <code>implicitModel</code>. The fallback at line 922 strips only the
+            <code>pP_</code> prefix, so it yields
+            <code>27_ctf9_142032_implicitModel</code>, entity id still attached.
+            The fallback only handles parameters with no id in them, so it has no
+            id to strip. Reaching it from the catch means the parameter survives
+            under a name nothing downstream reads. No portlet acts on it. The two
+            paths still compute the name differently, and step 3 shows where that
+            surfaces.
+          </div>
+        </section>
+
+        <section id="code">
+          <h2>Code walkthrough</h2>
+
+          <p>
+            The flow, end to end. A browser sends a stale entity id.
+            <code>getPortalRequestInfo</code>, the method that turns a request
+            into parsed information, hands each prefixed parameter to
+            <code>parsePortletParameterName</code>. That method asks the window
+            registry, which asks the entity registry, which throws. What happens
+            next is the change.
+          </p>
+
+          <p>
+            Four files: one fix, one test file, and two log lines in other
+            modules.
+          </p>
+
+          <h3>1. Where the exception is born</h3>
+
+          <p>
+            The entity id has three parts, and the throw quoted in Background is
+            what happens when the first of them, the definition id, does not
+            resolve. That is the failure this change is about. Two details matter
+            for reading the log.
+          </p>
+
+          <p>
+            First, a deleted portlet is not the only cause. The same lookup
+            returns null, and so raises the same exception with the same message,
+            when the definition exists but the user is not permitted to render
+            it. A warning naming definition <code>27</code> does not by itself
+            tell an operator which of the two happened.
+          </p>
+
+          <p>
+            Second, successful parses are cached, and failures are not. So a
+            stale id pays the full lookup on every request that carries it, and
+            logs a warning every time.
+          </p>
+
+          <h3>2. The 500 path, before</h3>
+
+          <p class="filename">uPortal-web/.../web/ExceptionLoggingFilter.java:46</p>
+          <pre>try {
+    chain.doFilter(request, response);
+} catch (Throwable t) {
+    // ... builds a message with the URL, query string, user and IP
+    this.logger.error(
+            "uPortal: unhandled exception '" + t.getMessage() + "' " + msg.toString(), t);
+    // ...
+    if (t instanceof RuntimeException) {
+        throw (RuntimeException) t;
+    }</pre>
+
+          <p>
+            This filter is mapped to <code>/*</code>, so it saw the exception,
+            and its name says what it does with it: it logs. Then it rethrows
+            unchanged, the container turns an uncaught exception into a 500, and
+            <code>web.xml</code> maps 500 to <code>/500.html</code>. Nothing in
+            that chain was ever going to produce a partial page, because nothing
+            in it knows that one parameter out of many is the problem. The only
+            place with enough context to make that call is the parser.
+          </p>
+
+          <h3>3. The fix, and where control actually goes</h3>
+
+          <p class="filename">
+            uPortal-rendering/.../url/UrlSyntaxProviderImpl.java:908
+          </p>
+          <pre><span class="add">+            try {</span>
+                 final IPortletWindowId portletWindowId =
+                         this.portletWindowRegistry.getPortletWindowId(request, additionalPortletId);
+                 return new Tuple&lt;String, IPortletWindowId&gt;(paramName, portletWindowId);
+<span class="add">+            } catch (IllegalArgumentException e) {</span>
+<span class="add">+                this.logger.warn(</span>
+<span class="add">+                        "Failed to resolve portlet window id for parameter '{}': {}."</span>
+<span class="add">+                                + " This may be caused by a stale URL referencing a"</span>
+<span class="add">+                                + " removed portlet. The parameter will be ignored.",</span>
+<span class="add">+                        name,</span>
+<span class="add">+                        e.getMessage());</span>
+             }</pre>
+
+          <p>
+            Read what the catch block does not contain. No
+            <code>return</code>, no <code>break</code>, no
+            <code>continue</code>, no rethrow. It logs, and then control reaches
+            the end of the loop body.
+          </p>
+
+          <p>
+            That matters, because this code sits inside a
+            <code>for</code> loop over every entity id the request declared. So
+            a failure is not the end of the attempt. The loop advances to the
+            next id, and if a later one both matches the parameter name and
+            resolves, line 911 returns a real window after all. Only when no
+            iteration returns does control leave the loop and reach the
+            fallback.
+          </p>
+
+          <table class="vals">
+            <tr>
+              <th>Situation</th>
+              <th>Returns from</th>
+              <th>Tuple first</th>
+              <th>Tuple second</th>
+            </tr>
+            <tr>
+              <td>An id matches and resolves</td>
+              <td>line 911</td>
+              <td><code>implicitModel</code></td>
+              <td class="yes">the window id</td>
+            </tr>
+            <tr>
+              <td>An id matches, resolution throws, no other id resolves</td>
+              <td>line 923</td>
+              <td class="warn"><code>27_ctf9_142032_implicitModel</code></td>
+              <td class="warn"><code>null</code></td>
+            </tr>
+            <tr>
+              <td>No declared id appears in the name</td>
+              <td>line 923</td>
+              <td><code>implicitModel</code></td>
+              <td><code>null</code></td>
+            </tr>
+          </table>
+
+          <p>
+            Row three is the case the fallback handles on its own, and there the
+            two strings agree, because a parameter with no id in it loses nothing
+            when only the prefix is stripped. Row two reaches the same line with
+            a name that does contain an id. That is the edge case from Intuition,
+            seen from the code side.
+          </p>
+
+          <h3>4. The pattern it says it matches</h3>
+
+          <p>
+            The pull request describes the new catch as matching an existing one
+            in the same class. That existing catch is real, and it is worth
+            comparing precisely.
+          </p>
+
+          <p class="filename">
+            uPortal-rendering/.../url/UrlSyntaxProviderImpl.java:945
+          </p>
+          <pre>            try {
+                return this.portletWindowRegistry.getPortletWindowId(request, portletWindowIdStr);
+            } catch (IllegalArgumentException e) {
+                this.logger.warn(
+                        "Failed to parse portlet window id: "
+                                + portletWindowIdStr
+                                + " null will be returned",
+                        e);
+            }
+        }
+
+        return null;</pre>
+
+          <p>
+            Same shape: try the registry call, catch the same exception type, log
+            at warn, fall through to a no-window result. Three differences a
+            reader should see.
+          </p>
+
+          <p>
+            The older one is single-shot, guarded by a
+            <code>contains</code> check rather than sitting in a loop, so it can
+            log at most once. The newer one is inside the loop, so one parameter
+            with several declared ids can log several times.
+          </p>
+
+          <p>
+            The older one returns a bare <code>null</code>. The newer one returns
+            a non-null <code>Tuple</code> whose <code>second</code> is null,
+            which is why the caller has a null check rather than a null result to
+            handle.
+          </p>
+
+          <p>
+            The older one passes the exception object <code>e</code> to the
+            logger, so the stack trace is recorded. The newer one passes
+            <code>e.getMessage()</code>, so the log carries the message without
+            the trace. That is the difference between knowing what failed and
+            knowing where.
+          </p>
+
+          <h3>5. What the caller does with a null window</h3>
+
+          <p>
+            Grepping the repository for <code>parsePortletParameterName</code>
+            finds one production caller, <code>getPortalRequestInfo</code> in the
+            same class, plus the new test. When <code>second</code> comes back
+            null the caller takes one of two paths, and neither one throws.
+          </p>
+
+          <p>
+            If no portlet is targeted by the request, it logs its own warning,
+            saying the parameter will be ignored, removes the parameter, and
+            breaks. If a portlet is targeted, the parameter is attributed to that
+            portlet under the name in <code>first</code>. For the stale case that
+            name still carries the entity id, so the targeted portlet is handed a
+            parameter it does not read.
+          </p>
+
+          <p>
+            Either way, parsing completes, rendering proceeds, and the user gets
+            their layout minus the removed portlet.
+          </p>
+
+          <h3>6. The tests, and what they cover</h3>
+
+          <p>
+            Two tests are added. Both stub the registry to throw the real
+            message, and both assert that <code>second</code> is null rather than
+            that an exception escapes.
+          </p>
+
+          <p class="filename">
+            uPortal-webapp/.../url/UrlSyntaxProviderImplTest.java:1059
+          </p>
+          <pre>    public void testParsePortletParameterNameWithInvalidPortletEntity() {</pre>
+
+          <p>
+            That one covers the new catch. The second, at line 1088, exercises
+            <code>parsePortletWindowIdSuffix</code>, the sibling method whose
+            catch already existed and which this diff does not touch. It changes
+            no behavior; it records the reference the new code was written to
+            match.
+          </p>
+
+          <p>
+            Note what the first test asserts and what it does not. It asserts
+            that <code>second</code> is null. It does not assert the value of
+            <code>first</code>, so the difference between
+            <code>implicitModel</code> and
+            <code>27_ctf9_142032_implicitModel</code> from step 3 is not pinned
+            by a test.
+          </p>
+
+          <h3>7. Thirty tests that were not running</h3>
+
+          <p>
+            The pull request describes itself in three bullets: the try/catch,
+            the two log lines, and "Existing
+            <code>UrlSyntaxProviderImplTest</code> updated with test for stale
+            portlet entity IDs". The words <code>@Ignore</code>,
+            <code>MockitoJUnitRunner</code>, and <code>Silent</code> do not
+            appear in it. So the two lines below are in the diff without being in
+            the description.
+          </p>
+
+          <p class="filename">
+            uPortal-webapp/.../url/UrlSyntaxProviderImplTest.java:53
+          </p>
+          <pre><span class="del">-@Ignore // Breaks on move to Gradle</span>
+<span class="del">-@RunWith(MockitoJUnitRunner.class)</span>
+<span class="add">+@RunWith(MockitoJUnitRunner.Silent.class)</span>
+ public class UrlSyntaxProviderImplTest {</pre>
+
+          <p>
+            <code>@Ignore</code> on a JUnit 4 class skips the entire class. Not
+            one method ran, and the setup methods did not run either. The class
+            holds 32 <code>@Test</code> methods at this commit, two of them new,
+            so 30 tests had been reporting as skipped rather than passing. A
+            green build said nothing about this file.
+          </p>
+
+          <p>
+            The comment gives the reason as
+            <code>// Breaks on move to Gradle</code>, which names a build
+            migration and not a defect in the code under test. When the
+            annotation landed is not something this page can tell you, because
+            the checkout it was written from holds a single commit.
+          </p>
+
+          <p>
+            The runner change is what switching them back on required. Plain
+            <code>MockitoJUnitRunner</code> is an alias for
+            <code>MockitoJUnitRunner.Strict</code>: after the class runs, Mockito
+            collects any <code>when(...)</code> stubbing that was never actually
+            called and fails the class with
+            <code>UnnecessaryStubbingException</code>. <code>Silent</code> runs
+            with lenient strictness, which switches off that detection and leaves
+            <code>verify</code> behavior untouched. This project pins Mockito
+            4.11.0 and JUnit 4.13.2.
+          </p>
+
+          <p>
+            The file shows what that detection would have caught. In one
+            URL-generation test, three stubbings sit together on
+            <code>portletWindow2</code>, which stands in for a delegate window:
+          </p>
+
+          <p class="filename">
+            uPortal-webapp/.../url/UrlSyntaxProviderImplTest.java:421-423
+          </p>
+          <pre>        when(portletWindow2.getPortletEntity()).thenReturn(portletEntity2);
+        when(portletWindow2.getDelegationParentId()).thenReturn(portletWindowId1);
+        when(portletEntity2.getLayoutNodeId()).thenReturn(subscribeId2);</pre>
+
+          <p>
+            The middle one is used: <code>generateUrl</code> reads
+            <code>getDelegationParentId()</code> for a non-targeted window. The
+            other two are not. <code>generateUrl</code> reads
+            <code>getPortletEntity()</code> and <code>getLayoutNodeId()</code>
+            only inside its <code>targetedPortletWindowId != null</code> branch,
+            and <code>portletWindow2</code> is not the targeted window here. So
+            two of the three stubbings are never realized, and strict mode fails
+            the whole class on them, not the one test. The same two appear again
+            in another generation test at line 546.
+          </p>
+
+          <div class="callout edge">
+            <span class="label">What the runner line does</span>
+            <code>Silent</code> is what lets the 30 tests run at all, and it
+            switches off unused-stub detection for every test in this class,
+            including ones added later whose stubs stop matching. Both follow
+            from the one line. Which of the two weighs more is a question for
+            this project's maintainers; what the page can do is make sure you saw
+            the line.
+          </div>
+
+          <h3>8. Two log lines in other modules</h3>
+
+          <p>
+            The remaining two files are unrelated to stale URLs. Each lowers one
+            log level. The frequencies below say how often each line fires, which
+            is the fact you need to judge the edits.
+          </p>
+
+          <p class="filename">
+            uPortal-security/.../url/ClassicMaxInactiveStrategy.java:47
+          </p>
+          <pre><span class="del">-            log.info(</span>
+<span class="add">+            log.debug(</span>
+                     "No {} permissions apply to user '{}'",</pre>
+
+          <p>
+            This runs in a filter mapped to the portal's main servlets, and the
+            filter re-checks at most once every five minutes per session. The
+            branch it sits in is the state of any deployment that never grants
+            the permission. At INFO, such a deployment logs this line once per
+            authenticated session per five minutes.
+          </p>
+
+          <p class="filename">
+            uPortal-utils/.../personalize/PersonalizerImpl.java:110
+          </p>
+          <pre><span class="del">-                log.warn("Person attribute value is not a string!! : [{}]", key);</span>
+<span class="add">+                log.debug("Person attribute value is not a string : [{}]", key);</span></pre>
+
+          <p>
+            This one sits in the else branch of a loop over every attribute of a
+            person, so it repeats per attribute, not per event. One call site
+            passes no session, which skips the cache and re-runs the whole loop,
+            re-logging it, for every personalized string. It was at WARN, so it
+            appeared among genuine faults.
+          </p>
+
+          <p>
+            Two smaller things in the same hunk. The message text changed: the
+            doubled exclamation marks are gone. And the pull request describes
+            both log edits as going "from info to debug", which is right for
+            <code>ClassicMaxInactiveStrategy</code> and not for this one, which
+            was at WARN. Worth knowing if you are reading the description rather
+            than the diff.
+          </p>
+
+          <p>
+            One piece of context a reader of this repository should have. uPortal
+            keeps a file called <code>AGENTS.md</code> at its root, holding the
+            conventions it expects contributors and coding agents to follow. Its
+            surgical-changes section says "Touch only what the task requires. Do
+            not 'improve' adjacent code, comments, or formatting" and "Every
+            changed line must trace directly back to the task at hand". Its
+            boundaries section lists "A change would affect more than one module"
+            under when to always stop and ask. These two edits are in two modules
+            that have nothing to do with stale URLs. Whether that reads as
+            welcome cleanup or as unrelated scope is a call for this project's
+            reviewers; the page's job is to make sure you noticed the edits are
+            there.
+          </p>
+
+          <div class="callout">
+            <span class="label">The transferable part</span>
+            When you make a fix by falling through to an existing path, check
+            what that path computes, not only what it returns. Here the fallback
+            produces a correct null window and a differently-derived parameter
+            name, because it only ever had to handle names with no id in them.
+            And when you read a diff, read the annotations as carefully as the
+            statements: a deleted <code>@Ignore</code> and a changed runner moved
+            30 tests from skipped to running, which changes what a green build
+            tells you about this file.
+          </div>
+        </section>
+
+        <section id="quiz">
+          <h2>Quiz</h2>
+
+          <p>
+            Five questions about why the change is shaped the way it is. Click an
+            option to see the answer.
+          </p>
+
+          <div class="quiz-question">
+            <p class="q">
+              1. After the new catch fires for
+              <code>pP_27_ctf9_142032_implicitModel</code>, and no other declared
+              id resolves, what <code>Tuple</code> does the method return?
+            </p>
+            <button class="quiz-option">
+              <code>first</code> is <code>implicitModel</code> and
+              <code>second</code> is null, the same as the success path minus the
+              window.
+            </button>
+            <button class="quiz-option" data-correct>
+              <code>first</code> is <code>27_ctf9_142032_implicitModel</code>,
+              entity id included, and <code>second</code> is null.
+            </button>
+            <button class="quiz-option">
+              <code>null</code>, since the catch logged and there is nothing
+              meaningful to return.
+            </button>
+            <div class="quiz-feedback" role="status">
+              The fallback at line 922 strips only the <code>pP_</code> prefix,
+              which is all a parameter with no entity id in it needs. The success
+              path at line 903 strips the prefix, the id, and the separator. Each
+              is correct for the case that reaches it directly;
+              the catch routes one case into the other's code.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              2. The diff deletes
+              <code>@Ignore // Breaks on move to Gradle</code> from the test
+              class. How many tests were running in that file before this pull
+              request?
+            </p>
+            <button class="quiz-option">
+              All 30, since <code>@Ignore</code> on a class only suppresses the
+              class-level setup, not the test methods.
+            </button>
+            <button class="quiz-option">
+              Only the ones without their own annotations, which the runner still
+              collects.
+            </button>
+            <button class="quiz-option" data-correct>
+              None. <code>@Ignore</code> on a JUnit 4 class skips every method in
+              it, so all 30 pre-existing tests reported as skipped.
+            </button>
+            <div class="quiz-feedback" role="status">
+              A skipped test is not a failing test, so a green build said nothing
+              about this file either way. The pull request description does not
+              mention this part of the change.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              3. Why would re-enabling a long-ignored Mockito test class
+              plausibly require switching to
+              <code>MockitoJUnitRunner.Silent</code>?
+            </p>
+            <button class="quiz-option" data-correct>
+              The strict runner fails the whole class when a stubbing is never
+              called, and a class that stopped running accumulates stubs for
+              calls the production code no longer makes.
+            </button>
+            <button class="quiz-option">
+              <code>Silent</code> suppresses the console output that an ignored
+              class would otherwise flood the build log with.
+            </button>
+            <button class="quiz-option">
+              The strict runner requires every mock to be verified, and thirty
+              old tests would each need <code>verify</code> calls added.
+            </button>
+            <div class="quiz-feedback" role="status">
+              The file carries the evidence: two stubbings on a delegate window
+              describe calls the parser makes only for the targeted window, so
+              they are never realized. Strict mode reports
+              <code>UnnecessaryStubbingException</code> for the class, not the
+              method, which is why one dead stub can block the whole file.
+              <code>Silent</code> changes nothing about verification.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              4. The pre-existing catch logs with
+              <code>logger.warn(message, e)</code>. The new one logs with
+              <code>logger.warn(template, name, e.getMessage())</code>. What does
+              an operator lose?
+            </p>
+            <button class="quiz-option">
+              Nothing. Passing the message is equivalent, and it keeps the log
+              line shorter.
+            </button>
+            <button class="quiz-option">
+              The exception type, so the log cannot distinguish an
+              <code>IllegalArgumentException</code> from any other failure.
+            </button>
+            <button class="quiz-option" data-correct>
+              The stack trace. The log says what failed and which parameter
+              caused it, but not the path through the registry that produced it.
+            </button>
+            <div class="quiz-feedback" role="status">
+              SLF4J treats a trailing <code>Throwable</code> specially and prints
+              its trace; a <code>String</code> argument fills a placeholder
+              instead. The new line does add something the old one lacks, the
+              offending parameter name, so this is a trade rather than a straight
+              loss. Worth knowing which half you have when reading the log.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              5. The catch sits inside a <code>for</code> loop over the declared
+              entity ids, and it does not <code>break</code> or
+              <code>return</code>. What behavior does that produce which
+              <code>return new Tuple&lt;&gt;(paramName, null)</code> inside the
+              catch would not?
+            </p>
+            <button class="quiz-option">
+              None, because a parameter name can only ever contain one entity id,
+              so the loop cannot reach a second match.
+            </button>
+            <button class="quiz-option" data-correct>
+              A later id that matches and resolves can still return a real
+              window, and a single parameter can log the warning more than once.
+            </button>
+            <button class="quiz-option">
+              The exception is rethrown once the loop ends, since a catch without
+              a return falls through to the default propagation.
+            </button>
+            <div class="quiz-feedback" role="status">
+              Falling through keeps the loop's original intent, which is to try
+              every declared id. Returning from the catch would abandon the
+              search on the first failure. The cost is the repeated warning, and
+              the returned name in the failure case, which the immediate return
+              would have computed at line 903 instead. A catch that logs and
+              continues is easy to skim past; what it continues into is the part
+              worth reading.
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      document.querySelectorAll(".quiz-question").forEach(function (question) {
+        var feedback = question.querySelector(".quiz-feedback");
+
+        // Shuffle the options on every load, so the correct answer's position is
+        // random and a reader cannot fall into answering by position. Each option
+        // is re-inserted before the feedback block, which has to stay last.
+        var shuffled = Array.prototype.slice.call(
+          question.querySelectorAll(".quiz-option"),
+        );
+        for (var i = shuffled.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var swap = shuffled[i];
+          shuffled[i] = shuffled[j];
+          shuffled[j] = swap;
+        }
+        shuffled.forEach(function (option) {
+          question.insertBefore(option, feedback);
+        });
+
+        var options = question.querySelectorAll(".quiz-option");
+        options.forEach(function (option) {
+          option.addEventListener("click", function () {
+            var isCorrect = option.hasAttribute("data-correct");
+            options.forEach(function (other) {
+              other.disabled = true;
+              if (other.hasAttribute("data-correct"))
+                other.classList.add("correct");
+            });
+            if (!isCorrect) option.classList.add("incorrect");
+            feedback.classList.add("show", isCorrect ? "ok" : "bad");
+            feedback.textContent =
+              (isCorrect ? "Correct. " : "Not quite. ") + feedback.textContent;
+          });
+        });
+      });
+    </script>
+    <script>
+      // Mermaid loads without blocking: the page scripts above run first, and a slow
+      // or blocked CDN never holds up the quiz or the rest of the page. This is the
+      // only permitted external request, and it fires only when a .mermaid block is
+      // present. Leave it in place; it is a no-op on pages without a diagram.
+      (function () {
+        var blocks = document.querySelectorAll(".mermaid");
+        if (!blocks.length) return;
+
+        // mermaid.run() replaces each block's text with an SVG, so the source is
+        // gone after the first render. Stash it, because a theme change has to
+        // parse it again.
+        blocks.forEach(function (block) {
+          block.dataset.source = block.textContent;
+        });
+
+        var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+        function render() {
+          blocks.forEach(function (block) {
+            block.removeAttribute("data-processed");
+            block.textContent = block.dataset.source;
+          });
+          try {
+            window.mermaid.initialize({
+              startOnLoad: false,
+              theme: darkQuery.matches ? "dark" : "default",
+            });
+          } catch (e) {}
+          Promise.resolve(window.mermaid.run({ nodes: blocks })).catch(
+            function () {},
+          );
+        }
+
+        var s = document.createElement("script");
+        s.src =
+          "https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js";
+        s.integrity =
+          "sha384-T/0lMUdJpd2S1ZHtRiofG3htU3xPCrFVeAQ1UUE2TJwlEJSV5NUwn30kP28n238E";
+        s.crossOrigin = "anonymous";
+        s.onload = function () {
+          render();
+          // Re-render when the reader switches system theme, so the diagram does
+          // not stay light on a dark page.
+          if (darkQuery.addEventListener)
+            darkQuery.addEventListener("change", render);
+        };
+        document.head.appendChild(s);
+      })();
+    </script>
+  </body>
+</html>

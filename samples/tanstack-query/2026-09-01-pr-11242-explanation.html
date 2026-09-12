@@ -1,0 +1,1200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TanStack Query PR 11242 explanation</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --surface: #f6f7f9;
+        --text: #1c2024;
+        --muted: #60646c;
+        --border: #d7dbdf;
+        --accent: #3b6cf6;
+        --accent-soft: #e8eefc;
+        --edge: #b5620a;
+        --edge-soft: #fbefe1;
+        --ok: #1a7f47;
+        --ok-soft: #e4f3ea;
+        --bad: #c62a3b;
+        --bad-soft: #fbe7e9;
+        --measure: 68ch;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #16181b;
+          --surface: #1f2226;
+          --text: #eceef0;
+          --muted: #9ba1a6;
+          --border: #33383d;
+          --accent: #7aa2ff;
+          --accent-soft: #1e2740;
+          --edge: #e08c3a;
+          --edge-soft: #2e2517;
+          --ok: #57c98b;
+          --ok-soft: #17281d;
+          --bad: #f07178;
+          --bad-soft: #2c1a1c;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          17px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 2.5rem;
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem 6rem;
+      }
+      nav.toc {
+        position: sticky;
+        top: 2.5rem;
+        align-self: start;
+        font-size: 0.9rem;
+      }
+      nav.toc strong {
+        display: block;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.6rem;
+      }
+      nav.toc ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      nav.toc li {
+        margin: 0.35rem 0;
+      }
+      nav.toc a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+      nav.toc a:hover {
+        color: var(--accent);
+      }
+      main {
+        min-width: 0;
+      }
+      main > header {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1.25rem;
+        margin-bottom: 2rem;
+      }
+      main > header h1 {
+        font-size: 1.9rem;
+        line-height: 1.2;
+        margin: 0 0 0.6rem;
+      }
+      main > header .lead {
+        color: var(--muted);
+        margin: 0;
+        max-width: var(--measure);
+      }
+      section {
+        margin-bottom: 3.5rem;
+      }
+      section h2 {
+        font-size: 1.4rem;
+        margin: 0 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--border);
+      }
+      section h3 {
+        font-size: 1.05rem;
+        margin: 2rem 0 0.6rem;
+      }
+      section p,
+      section ul,
+      section ol {
+        max-width: var(--measure);
+      }
+      li {
+        margin: 0.3rem 0;
+      }
+      pre,
+      .code-block {
+        white-space: pre-wrap;
+        overflow-x: auto;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.9rem 1.1rem;
+        font:
+          0.86rem/1.55 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Consolas,
+          monospace;
+        tab-size: 2;
+      }
+      pre .del {
+        color: var(--bad);
+      }
+      pre .add {
+        color: var(--ok);
+      }
+      pre .hi {
+        background: var(--accent-soft);
+        border-radius: 3px;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9em;
+        background: var(--surface);
+        padding: 0.05rem 0.3rem;
+        border-radius: 4px;
+      }
+      .filename {
+        font-size: 0.78rem;
+        color: var(--muted);
+        font-family: ui-monospace, monospace;
+        margin: 1.5rem 0 0.3rem;
+      }
+      table.vals {
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+        font-size: 0.86rem;
+        width: 100%;
+        max-width: 620px;
+      }
+      table.vals th,
+      table.vals td {
+        border: 1px solid var(--border);
+        padding: 0.4rem 0.65rem;
+        text-align: left;
+      }
+      table.vals th {
+        background: var(--surface);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+      }
+      table.vals td.yes {
+        background: var(--ok-soft);
+      }
+      table.vals td.no {
+        background: var(--bad-soft);
+      }
+      table.vals td.warn {
+        background: var(--edge-soft);
+      }
+      .callout {
+        background: var(--accent-soft);
+        border-left: 3px solid var(--accent);
+        border-radius: 0 6px 6px 0;
+        padding: 0.85rem 1.1rem;
+        margin: 1.5rem 0;
+        max-width: var(--measure);
+      }
+      .callout .label {
+        display: block;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+      }
+      .callout.edge {
+        background: var(--edge-soft);
+        border-left-color: var(--edge);
+      }
+      .callout.edge .label {
+        color: var(--edge);
+      }
+      details.skippable {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem 1.1rem;
+        margin: 1.25rem 0;
+      }
+      details.skippable > summary {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.92rem;
+        color: var(--muted);
+      }
+      details.skippable[open] > summary {
+        margin-bottom: 0.75rem;
+      }
+      .ui-mockup {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 1.5rem 0;
+        max-width: 560px;
+        font-size: 0.85rem;
+      }
+      .ui-mockup .bar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 0.5rem 0.85rem;
+        font-weight: 600;
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+      .ui-mockup .body {
+        padding: 1.1rem 0.85rem;
+        font-family: ui-monospace, monospace;
+        font-size: 0.78rem;
+        white-space: pre-wrap;
+      }
+      .mock-caption {
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin: 0.3rem 0 0;
+        max-width: var(--measure);
+      }
+      .dataflow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 1.5rem 0;
+      }
+      /* Each arrow travels with the node it points at. Without this, a flow
+         wider than the column wraps between an arrow and its node, leaving the
+         arrow pointing at nothing and the node stranded on the next line. */
+      .dataflow .step {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .dataflow .node {
+        background: var(--accent-soft);
+        border: 1px solid var(--accent);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 0.6rem 0.9rem;
+        font-size: 0.85rem;
+        text-align: center;
+        max-width: 175px;
+      }
+      .dataflow .node.terminal {
+        background: var(--surface);
+        border-color: var(--border);
+      }
+      .dataflow .node.pass {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .dataflow .node.fail {
+        background: var(--bad-soft);
+        border-color: var(--bad);
+      }
+      .dataflow .arrow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.72rem;
+        min-width: 96px;
+      }
+      .dataflow .arrow .line {
+        width: 100%;
+        border-top: 2px solid var(--border);
+        position: relative;
+      }
+      .dataflow .arrow .line::after {
+        content: "\25B6";
+        position: absolute;
+        right: -2px;
+        top: -0.72em;
+        color: var(--border);
+        font-size: 0.7rem;
+      }
+      .dataflow .arrow .data {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 0.05rem 0.35rem;
+        margin-bottom: 0.2rem;
+        font-family: ui-monospace, monospace;
+      }
+      .flow-label {
+        font-size: 0.8rem;
+        color: var(--muted);
+        font-weight: 600;
+        margin: 1.25rem 0 0.25rem;
+      }
+      .frames {
+        list-style: none;
+        padding: 0;
+        margin: 1.25rem 0;
+        max-width: 620px;
+        font-family: ui-monospace, monospace;
+        font-size: 0.82rem;
+      }
+      .frames li {
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.45rem 0.7rem;
+        margin: 0.3rem 0;
+        background: var(--surface);
+      }
+      .frames li.target {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .frames .n {
+        display: inline-block;
+        min-width: 2.2em;
+        color: var(--muted);
+      }
+      .mermaid {
+        margin: 1.75rem 0;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1rem;
+        overflow-x: auto;
+        white-space: pre;
+        font-family: ui-monospace, monospace;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .quiz-question {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1.1rem 1.25rem;
+        margin: 1.5rem 0;
+        max-width: var(--measure);
+      }
+      .quiz-question > p.q {
+        font-weight: 600;
+        margin: 0 0 0.85rem;
+      }
+      .quiz-option {
+        display: block;
+        width: 100%;
+        text-align: left;
+        background: var(--bg);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 0.6rem 0.8rem;
+        margin-bottom: 0.5rem;
+        font: inherit;
+        font-size: 0.92rem;
+        cursor: pointer;
+      }
+      .quiz-option:hover:not(:disabled) {
+        border-color: var(--accent);
+      }
+      .quiz-option.correct {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .quiz-option.incorrect {
+        background: var(--bad-soft);
+        border-color: var(--bad);
+      }
+      .quiz-option:disabled {
+        cursor: default;
+      }
+      .quiz-feedback {
+        display: none;
+        font-size: 0.88rem;
+        padding: 0.6rem 0.8rem;
+        border-radius: 7px;
+        margin-top: 0.3rem;
+      }
+      .quiz-feedback.show {
+        display: block;
+      }
+      .quiz-feedback.ok {
+        background: var(--ok-soft);
+      }
+      .quiz-feedback.bad {
+        background: var(--edge-soft);
+      }
+      @media (max-width: 800px) {
+        .layout {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 1rem;
+          padding: 1.25rem 1.1rem 4rem;
+        }
+        nav.toc {
+          position: static;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 0.75rem 1rem;
+        }
+        body {
+          font-size: 16px;
+        }
+        main > header h1 {
+          font-size: 1.6rem;
+        }
+      }
+    </style>
+  </head>
+    <body>
+    <div class="layout">
+      <nav class="toc">
+        <strong>Contents</strong>
+        <ol>
+          <li><a href="#background">Background</a></li>
+          <li><a href="#intuition">Intuition</a></li>
+          <li><a href="#code">Code walkthrough</a></li>
+          <li><a href="#quiz">Quiz</a></li>
+        </ol>
+      </nav>
+
+      <main>
+        <header>
+          <h1>A guard that only reset when nothing went wrong</h1>
+          <p class="lead">
+            TanStack Query
+            <a href="https://github.com/TanStack/query/pull/11242"
+              >pull request 11242</a
+            >
+            adds <code>try</code> and <code>finally</code> around one callback.
+            Without them, a single throw from unrelated code could stop a browser
+            tab from broadcasting anything again.
+          </p>
+        </header>
+
+        <section id="background">
+          <h2>Background</h2>
+
+          <details class="skippable">
+            <summary>
+              New to cross-tab cache sync? Expand for the deeper background.
+            </summary>
+            <p>
+              Open your app in two browser tabs. Each tab is a separate
+              JavaScript program with its own memory, so each has its own copy of
+              the query cache. Update your profile in one tab, and the other tab
+              still shows the old name until something tells it otherwise.
+            </p>
+            <p>
+              The browser offers a way to talk between them.
+              <code>BroadcastChannel</code> is a named channel: any tab that
+              opens the same name receives what the others post to it. The
+              experimental package
+              <code>@tanstack/query-broadcast-client-experimental</code> uses it
+              to keep query caches in step. Roughly:
+            </p>
+            <pre>broadcastQueryClient({ queryClient, broadcastChannel: 'my-app' })</pre>
+            <p>
+              After that call, two things are wired up. The tab subscribes to its
+              own cache, and posts a message whenever a query changes. And it
+              listens on the channel, applying messages other tabs post.
+            </p>
+            <p>
+              Put those two together and a problem appears. Tab A posts a change.
+              Tab B receives it and writes it into its own cache. Tab B's cache
+              subscriber notices the write and posts it, because posting on
+              change is exactly its job. Tab A receives that, writes it, posts
+              it. The two tabs now talk forever about one change.
+            </p>
+            <p>
+              The usual fix is a flag: while applying somebody else's message, do
+              not broadcast. That is the flag this change is about, and it is
+              named <code>transaction</code>.
+            </p>
+          </details>
+
+          <p>
+            The flag and the helper that manages it are six lines of closure
+            state inside <code>broadcastQueryClient</code>. This is the code
+            before the change:
+          </p>
+
+          <p class="filename">
+            packages/query-broadcast-client-experimental/src/index.ts:55, before
+          </p>
+          <pre>  let transaction = false
+  const tx = (cb: () =&gt; void) =&gt; {
+    transaction = true
+    cb()
+    transaction = false
+  }</pre>
+
+          <p>
+            Set the flag, do the work, clear the flag. Two things about the
+            surrounding code matter here.
+          </p>
+
+          <p>
+            Grepping the package for <code>transaction</code> returns four
+            lines: the declaration, two writes, and one read. The read is at the
+            top of the cache subscriber.
+          </p>
+
+          <p class="filename">
+            packages/query-broadcast-client-experimental/src/index.ts:112
+          </p>
+          <pre>  const unsubscribe = queryCache.subscribe((queryEvent) =&gt; {
+    if (transaction) {
+      return
+    }</pre>
+
+          <p>
+            Below that early return are the three calls that post to other tabs,
+            and nothing else. So the flag suppresses outbound messages only. It
+            does not touch the local cache write, which happens either way.
+          </p>
+
+          <p>
+            The same search shows <code>tx(</code> appears once, in the handler
+            for incoming messages. So both writes live inside
+            <code>tx</code>, and nothing else in the package can set or clear the
+            flag.
+          </p>
+
+          <div class="callout">
+            <span class="label">Key concept</span>
+            A flag that means "we are inside something" has to become false on
+            every path out of that something, including the paths you did not
+            plan. Set-do-clear reads as three steps, and it is really two
+            branches: one where the work returns, and one where it throws.
+          </div>
+        </section>
+
+        <section id="intuition">
+          <h2>Intuition</h2>
+
+          <p>
+            The bug is that a throw skips the last line. Nothing catches it,
+            nothing resets the flag, and there is no other writer to fix it
+            later.
+          </p>
+
+          <p>
+            The flag's effect while stuck is what makes it hard to notice.
+            Nothing crashes, and the screen stays correct. Every local change
+            still works in this tab. The tab stops telling anyone else, and keeps
+            doing so for as long as the page stays open, because the flag lives in
+            a closure that only a reload discards.
+          </p>
+
+          <pre class="mermaid">stateDiagram-v2
+    state "Idle. transaction false. local changes broadcast" as Idle
+    state "Applying. transaction true. local changes suppressed" as Applying
+    state "Stuck. transaction true. nothing broadcasts again" as Stuck
+
+    [*] --&gt; Idle: tab opens
+    Idle --&gt; Applying: a message arrives from another tab
+    Applying --&gt; Idle: the callback returns
+    Applying --&gt; Stuck: the callback throws. before the fix
+    Applying --&gt; Idle: the callback throws. after the fix
+    Stuck --&gt; Stuck: every later local change</pre>
+
+          <p>
+            Two arrows leave <code>Applying</code> in the before case, and only
+            one returns to <code>Idle</code>. The fix does not add a state. It
+            makes the throw arrow point back to <code>Idle</code>. One thing the
+            diagram leaves out: the error itself keeps travelling outward on that
+            arrow, which the next section covers.
+          </p>
+
+          <h3>What follows from that</h3>
+
+          <p>
+            Follow one change through two tabs after the flag has stuck. The
+            arrows carry what is actually posted.
+          </p>
+
+          <p class="flow-label">Tab B, healthy</p>
+          <div class="dataflow">
+            <div class="node terminal">local edit</div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">cache write</span><span class="line"></span>
+              </div>
+              <div class="node">subscriber</div>
+            </div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">flag false</span><span class="line"></span>
+              </div>
+              <div class="node pass">posts to Tab A</div>
+            </div>
+          </div>
+
+          <p class="flow-label">Tab B, after the flag stuck</p>
+          <div class="dataflow">
+            <div class="node terminal">local edit</div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">cache write</span><span class="line"></span>
+              </div>
+              <div class="node">subscriber</div>
+            </div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">flag true</span><span class="line"></span>
+              </div>
+              <div class="node fail">returns. nothing posted</div>
+            </div>
+          </div>
+
+          <p>
+            Because the guard sits in the subscriber and everything below it is
+            posting, Tab B's own reads and writes are untouched. Tab A stops
+            receiving updates, and nothing in either tab reports it. A reload of
+            Tab B clears the flag, since it is closure state.
+          </p>
+
+          <h3>The fix</h3>
+
+          <p class="filename">
+            packages/query-broadcast-client-experimental/src/index.ts:56
+          </p>
+          <pre>  const tx = (cb: () =&gt; void) =&gt; {
+    transaction = true
+<span class="del">-    cb()</span>
+<span class="del">-    transaction = false</span>
+<span class="add">+    try {</span>
+<span class="add">+      cb()</span>
+<span class="add">+    } finally {</span>
+<span class="add">+      // Guard against `cb` throwing (e.g. `query.setState`/`queryCache.build`</span>
+<span class="add">+      // triggering a listener that throws while applying an incoming</span>
+<span class="add">+      // cross-tab message). Without this, `transaction` would stay `true`</span>
+<span class="add">+      // forever, silently disabling this tab's own broadcasts to other tabs</span>
+<span class="add">+      // for the rest of the session.</span>
+<span class="add">+      transaction = false</span>
+<span class="add">+    }</span>
+  }</pre>
+
+          <p>
+            Note what is absent. There is no <code>catch</code>. A
+            <code>finally</code> block runs on the way out whether the work
+            returned or threw, and with no <code>catch</code> to stop it, the
+            original error keeps going. So the fix restores the flag without
+            hiding the failure that broke it.
+          </p>
+
+          <div class="callout edge">
+            <span class="label">Edge case</span>
+            The flag is broader than the echo it needs to stop. Of the three
+            outbound posts the guard suppresses, the <code>added</code> one fires
+            unconditionally and the <code>removed</code> one fires when the query
+            has observers, so both are real echoes. The <code>updated</code> post
+            is conditional on the cache action being <code>success</code>, and
+            <code>query.setState</code> dispatches an action of type
+            <code>setState</code>, so that path would not have echoed even with
+            no flag at all. The flag covers it anyway, which is the simpler rule to hold.
+          </div>
+        </section>
+
+        <section id="code">
+          <h2>Code walkthrough</h2>
+
+          <p>
+            The flow, end to end. A message arrives from another tab.
+            <code>onmessage</code> passes the whole apply-locally body to
+            <code>tx</code>, which raises the flag. The body writes to the cache.
+            The cache notifies its listeners synchronously, in the same call
+            stack. One of those listeners throws. What happens to the flag from
+            there is the change.
+          </p>
+
+          <p>
+            Three files: the fix, its tests, and a changeset.
+          </p>
+
+          <h3>1. The only caller</h3>
+
+          <p class="filename">
+            packages/query-broadcast-client-experimental/src/index.ts:148
+          </p>
+          <pre>  channel.onmessage = (action) =&gt; {
+    if (!action?.type) {
+      return
+    }
+
+    tx(() =&gt; {
+      const { type, queryHash, queryKey, state } = action
+      const query = queryCache.get(queryHash)</pre>
+
+          <p>
+            Everything after that opening, through to line 190, runs inside the
+            callback. The handler branches on the message type and reaches one of
+            five cache mutations: <code>query.setState</code> at lines 160 and
+            178, and <code>queryCache.build</code> at lines 164 and 181, with
+            <code>queryCache.remove</code> at line 174. All of them are inside
+            <code>tx</code>. The only code outside it is the early return for a message with no type.
+          </p>
+
+          <h3>2. Why the callback can throw</h3>
+
+          <p>
+            The callback can throw because a cache write notifies subscribers
+            immediately, in the same stack, not on a later tick.
+          </p>
+
+          <p class="filename">packages/query-core/src/queryCache.ts:200</p>
+          <pre>  notify(event: QueryCacheNotifyEvent): void {
+    notifyManager.batch(() =&gt; {
+      this.listeners.forEach((listener) =&gt; {
+        listener(event)
+      })
+    })
+  }</pre>
+
+          <p>
+            <code>queryCache.build</code> reaches that notify, and
+            <code>query.setState</code> reaches an equivalent one after
+            synchronously calling every observer.
+          </p>
+
+          <p>
+            <code>notifyManager.batch</code> is the same shape as the fix, one
+            layer down. It counts nested transactions, and it restores the count
+            in a <code>finally</code> with no <code>catch</code>:
+          </p>
+
+          <p class="filename">packages/query-core/src/notifyManager.ts:54</p>
+          <pre>      let result
+      transactions++
+      try {
+        result = callback()
+      } finally {
+        transactions--
+        if (!transactions) {
+          flush()
+        }
+      }</pre>
+
+          <p>
+            So query-core already protects its own counter this way, and lets the
+            error continue outward. The broadcast package's flag was the one link
+            in the chain that did not.
+          </p>
+
+          <p>
+            So any listener throwing lands in the <code>tx</code> callback. That
+            includes an application's own <code>queryCache.subscribe</code>
+            handler, a devtools listener, or an observer callback. None of those
+            know they are running inside somebody else's transaction.
+          </p>
+
+          <h3>3. The tests, and which one tests the bug</h3>
+
+          <p>
+            Two tests are added, and they drive the two different mutation paths.
+            The first posts an <code>added</code> message for a query hash the
+            cache does not have, so the handler falls to
+            <code>queryCache.build</code>. The second seeds a query first and
+            posts <code>updated</code> for that exact hash, so the handler takes
+            <code>query.setState</code> and returns before <code>build</code>.
+          </p>
+
+          <p>
+            Each test then asserts twice. Both snippets below come from the
+            first test, and the two assertions do different jobs.
+          </p>
+
+          <p class="filename">
+            packages/query-broadcast-client-experimental/src/__tests__/index.test.ts:69
+          </p>
+          <pre>      expect(() =&gt; {
+        lastCreatedChannel.onmessage?.({
+          type: 'added',
+          queryHash: '["remote"]',
+          queryKey: ['remote'],
+          state: { data: 1 },
+        })
+      }).toThrow('boom')</pre>
+
+          <p>
+            That one passes before the fix and after it. The old code threw out
+            of <code>onmessage</code> too, so it cannot tell the two versions
+            apart. It pins something else: that the fix did not turn the stuck
+            flag into a swallowed error. A <code>catch</code> would have reset the
+            flag too, and this assertion rules that out.
+          </p>
+
+          <p class="filename">
+            packages/query-broadcast-client-experimental/src/__tests__/index.test.ts:78
+          </p>
+          <pre>      explodingUnsubscribe()
+      mockPostMessage.mockClear()
+
+      // A later local change must still be broadcast to other tabs, instead
+      // of being silently swallowed because the transaction flag got stuck.
+      queryClient.setQueryData(['local'], { value: 1 })
+
+      expect(mockPostMessage).toHaveBeenCalled()</pre>
+
+          <p>
+            This is the one that fails before the fix. It removes the exploding
+            listener, clears the spy, makes an ordinary local change, and checks
+            that the tab still posts. Under the old code the flag was still true,
+            the subscriber returned at its first line, and
+            <code>postMessage</code> was never reached again for that client.
+          </p>
+
+          <p>
+            One more detail. The local
+            <code>setQueryData</code> creates a new query, which produces an
+            <code>added</code> event, and that post is unconditional. So the test
+            does not depend on the conditional <code>updated</code> path from the
+            edge case above.
+          </p>
+
+          <h3>4. The seam the test needed</h3>
+
+          <p class="filename">
+            packages/query-broadcast-client-experimental/src/__tests__/index.test.ts:16
+          </p>
+          <pre>    BroadcastChannel: class MockBroadcastChannel {
+      onmessage = null
+      postMessage = mockPostMessage
+      close = mockClose
+      constructor() {
+        lastCreatedChannel = this
+      }</pre>
+
+          <p>
+            <code>broadcastQueryClient</code> constructs its channel internally
+            and never hands it back; the return value is a teardown function. So
+            the existing tests could only watch what went out, through the shared
+            <code>postMessage</code> spy. Capturing <code>this</code> in the mock
+            constructor gives the test the actual instance whose
+            <code>onmessage</code> the production code assigned, which is how
+            this test simulates a message arriving.
+          </p>
+
+          <h3>5. Why the exploding listener does not break the test setup</h3>
+
+          <p>
+            The test registers a subscriber that always throws. The broadcast
+            client has a subscriber too, and it needs to keep working. Both are
+            on the same cache.
+          </p>
+
+          <p>
+            The ordering is what saves it.
+            <code>broadcastQueryClient</code> subscribes when it is called, which
+            the tests do first, and the cache stores listeners in a
+            <code>Set</code>, which iterates in insertion order. So the broadcast
+            subscriber runs first, hits the <code>transaction</code> guard,
+            returns, and only then does the exploding one throw.
+          </p>
+
+          <h3>6. The changeset</h3>
+
+          <p class="filename">
+            .changeset/broadcast-client-transaction-stuck.md
+          </p>
+          <pre>---
+'@tanstack/query-broadcast-client-experimental': patch
+---
+
+fix(broadcast-client): recover from errors thrown while applying an incoming cross-tab message instead of permanently disabling this tab's own broadcasts</pre>
+
+          <p>
+            A patch, for the one experimental package. The changeset names recovery from the error, not prevention of it.
+          </p>
+
+          <h3>7. The same shape elsewhere</h3>
+
+          <p>
+            The pull request describes this as the same class of bug as a guard
+            that resets only on the happy path, and says similar issues were
+            fixed in the persister packages. That history is not checkable from a
+            shallow single-commit checkout, so treat it as the author's account
+            rather than something this page verified.
+          </p>
+
+          <p>
+            The pattern itself is visible in the repository, and it is what makes
+            the shape worth naming. Five persist-client packages hold a
+            restore flag while a promise runs, and each resets it in a
+            <code>.finally</code>: the angular, react, preact, solid, and svelte
+            persist-client packages. That matters because the restore they wrap
+            rethrows on failure, so a <code>.then</code> alone would not run. It
+            is the promise-shaped equivalent of what this change does
+            synchronously.
+          </p>
+
+          <p>
+            One place has the same shape without it.
+            <code>packages/vue-query/src/vueQueryPlugin.ts:51</code> sets a
+            restore flag and clears it inside the promise's
+            <code>.then</code>, with no <code>.catch</code> or
+            <code>.finally</code>. What that means for that package is a
+            question for its maintainers. It is here because it shows how easy
+            the shape is to write without noticing.
+          </p>
+
+          <div class="callout">
+            <span class="label">The transferable part</span>
+            Any time you write "set a flag, do work, clear the flag", the flag is
+            an obligation to code you cannot see. Put the reset where
+            the language guarantees it runs: <code>finally</code> for synchronous
+            work, <code>.finally</code> for a promise. And prefer
+            <code>finally</code> without <code>catch</code>, so the error that
+            broke the invariant still reaches whoever should hear about it. A
+            stuck guard is worse than a crash, because a crash tells you when and
+            where.
+          </div>
+        </section>
+
+        <section id="quiz">
+          <h2>Quiz</h2>
+
+          <p>
+            Five questions about why the change is shaped the way it is. Click an
+            option to see the answer.
+          </p>
+
+          <div class="quiz-question">
+            <p class="q">
+              1. While <code>transaction</code> is stuck at <code>true</code>,
+              what stops working in that tab?
+            </p>
+            <button class="quiz-option">
+              Incoming messages from other tabs, since the flag makes the handler
+              treat them as already applied.
+            </button>
+            <button class="quiz-option">
+              All cache writes, since the subscriber returns before the cache is
+              updated.
+            </button>
+            <button class="quiz-option" data-correct>
+              Only outbound posts. Local cache writes still happen; the tab just
+              stops telling other tabs about them.
+            </button>
+            <div class="quiz-feedback" role="status">
+              The guard is the first statement of the cache
+              <em>subscriber</em>, which runs after a write, and everything below
+              it is posting. So the tab keeps working normally for the person
+              using it, which is what makes this hard to notice. Incoming
+              messages keep being applied too, since the flag is only read in the
+              subscriber.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              2. Both new tests begin with
+              <code>expect(() =&gt; onmessage(...)).toThrow('boom')</code>. What
+              does that assertion prove about the bug?
+            </p>
+            <button class="quiz-option" data-correct>
+              Nothing. It passes before and after the fix. It pins that the fix
+              did not make the error disappear.
+            </button>
+            <button class="quiz-option">
+              That the flag is reset, since an error can only escape
+              <code>tx</code> once <code>finally</code> has run.
+            </button>
+            <button class="quiz-option">
+              That the exploding listener was registered successfully, without
+              which the rest of the test would pass trivially.
+            </button>
+            <div class="quiz-feedback" role="status">
+              The old code also threw out of <code>onmessage</code>, so this
+              assertion cannot distinguish the two versions. What it rules out
+              is a <code>catch</code> that swallows the error, which would also
+              have reset the flag. Only the second assertion, that a later local
+              change still posts, fails before the change.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              3. Why can the callback passed to <code>tx</code> throw at all?
+              Nothing in the broadcast package raises an error there.
+            </p>
+            <button class="quiz-option">
+              The <code>BroadcastChannel</code> library rethrows structured-clone
+              failures into the handler when a message cannot be deserialized.
+            </button>
+            <button class="quiz-option" data-correct>
+              Cache writes notify subscribers synchronously in the same stack, so
+              any listener anywhere in the app throws straight back into the
+              callback.
+            </button>
+            <button class="quiz-option">
+              <code>query.setState</code> validates the incoming state and throws
+              when a message from an older version of the app does not match.
+            </button>
+            <div class="quiz-feedback" role="status">
+              The listeners belong to the application, to devtools, or to
+              observers, and none of them know they are running inside a
+              transaction. The notify path uses
+              <code>try</code>/<code>finally</code> with no
+              <code>catch</code> of its own, so it restores its own state and
+              passes the error along.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              4. The test adds a cache subscriber that always throws, on the same
+              cache the broadcast client subscribes to. Why does the broadcast
+              client's own subscriber still run?
+            </p>
+            <button class="quiz-option">
+              The cache calls each listener in its own <code>try</code>, so one
+              throwing listener cannot prevent the others.
+            </button>
+            <button class="quiz-option">
+              The broadcast client's subscriber is registered with a priority
+              flag that puts it ahead of application listeners.
+            </button>
+            <button class="quiz-option" data-correct>
+              Listeners live in a <code>Set</code> and run in insertion order, and
+              the broadcast client subscribed first, so it returns before the
+              exploding one throws.
+            </button>
+            <div class="quiz-feedback" role="status">
+              Insertion order is doing real work here, and it comes from
+              <code>Set</code> semantics rather than from anything the test
+              declares. The cache does not isolate listeners from each other,
+              which is also why one throwing listener could reach the flag at
+              all.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              5. Suppose the fix had been
+              <code>try { cb() } catch {} finally { transaction = false }</code>.
+              The flag would reset. What breaks?
+            </p>
+            <button class="quiz-option">
+              Nothing functional. The flag resets either way, and swallowing the
+              error keeps one bad listener from breaking cross-tab sync.
+            </button>
+            <button class="quiz-option">
+              The <code>finally</code> block would no longer run, because a
+              <code>catch</code> that completes normally skips it.
+            </button>
+            <button class="quiz-option" data-correct>
+              The error stops surfacing anywhere, so the listener bug that caused
+              this becomes invisible. The first assertion in both new tests would
+              fail.
+            </button>
+            <div class="quiz-feedback" role="status">
+              This is why the tests assert the throw. A stuck flag and a
+              swallowed exception are both silent, so one replaces the other. The
+              first option is worth taking seriously, since a listener that throws
+              really can disrupt sync; what the chosen shape does is leave that
+              listener's failure visible to whoever owns it.
+              <code>finally</code> runs after a <code>catch</code> completes
+              normally, so the second option is not how the construct behaves.
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      document.querySelectorAll(".quiz-question").forEach(function (question) {
+        var feedback = question.querySelector(".quiz-feedback");
+
+        // Shuffle the options on every load, so the correct answer's position is
+        // random and a reader cannot fall into answering by position. Each option
+        // is re-inserted before the feedback block, which has to stay last.
+        var shuffled = Array.prototype.slice.call(
+          question.querySelectorAll(".quiz-option"),
+        );
+        for (var i = shuffled.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var swap = shuffled[i];
+          shuffled[i] = shuffled[j];
+          shuffled[j] = swap;
+        }
+        shuffled.forEach(function (option) {
+          question.insertBefore(option, feedback);
+        });
+
+        var options = question.querySelectorAll(".quiz-option");
+        options.forEach(function (option) {
+          option.addEventListener("click", function () {
+            var isCorrect = option.hasAttribute("data-correct");
+            options.forEach(function (other) {
+              other.disabled = true;
+              if (other.hasAttribute("data-correct"))
+                other.classList.add("correct");
+            });
+            if (!isCorrect) option.classList.add("incorrect");
+            feedback.classList.add("show", isCorrect ? "ok" : "bad");
+            feedback.textContent =
+              (isCorrect ? "Correct. " : "Not quite. ") + feedback.textContent;
+          });
+        });
+      });
+    </script>
+    <script>
+      // Mermaid loads without blocking: the page scripts above run first, and a slow
+      // or blocked CDN never holds up the quiz or the rest of the page. This is the
+      // only permitted external request, and it fires only when a .mermaid block is
+      // present. Leave it in place; it is a no-op on pages without a diagram.
+      (function () {
+        var blocks = document.querySelectorAll(".mermaid");
+        if (!blocks.length) return;
+
+        // mermaid.run() replaces each block's text with an SVG, so the source is
+        // gone after the first render. Stash it, because a theme change has to
+        // parse it again.
+        blocks.forEach(function (block) {
+          block.dataset.source = block.textContent;
+        });
+
+        var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+        function render() {
+          blocks.forEach(function (block) {
+            block.removeAttribute("data-processed");
+            block.textContent = block.dataset.source;
+          });
+          try {
+            window.mermaid.initialize({
+              startOnLoad: false,
+              theme: darkQuery.matches ? "dark" : "default",
+            });
+          } catch (e) {}
+          Promise.resolve(window.mermaid.run({ nodes: blocks })).catch(
+            function () {},
+          );
+        }
+
+        var s = document.createElement("script");
+        s.src =
+          "https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js";
+        s.integrity =
+          "sha384-T/0lMUdJpd2S1ZHtRiofG3htU3xPCrFVeAQ1UUE2TJwlEJSV5NUwn30kP28n238E";
+        s.crossOrigin = "anonymous";
+        s.onload = function () {
+          render();
+          // Re-render when the reader switches system theme, so the diagram does
+          // not stay light on a dark page.
+          if (darkQuery.addEventListener)
+            darkQuery.addEventListener("change", render);
+        };
+        document.head.appendChild(s);
+      })();
+    </script>
+  </body>
+</html>

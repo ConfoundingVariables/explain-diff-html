@@ -1,0 +1,1277 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>uPortal PR 2983 explanation</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --surface: #f6f7f9;
+        --text: #1c2024;
+        --muted: #60646c;
+        --border: #d7dbdf;
+        --accent: #3b6cf6;
+        --accent-soft: #e8eefc;
+        --edge: #b5620a;
+        --edge-soft: #fbefe1;
+        --ok: #1a7f47;
+        --ok-soft: #e4f3ea;
+        --bad: #c62a3b;
+        --bad-soft: #fbe7e9;
+        --measure: 68ch;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #16181b;
+          --surface: #1f2226;
+          --text: #eceef0;
+          --muted: #9ba1a6;
+          --border: #33383d;
+          --accent: #7aa2ff;
+          --accent-soft: #1e2740;
+          --edge: #e08c3a;
+          --edge-soft: #2e2517;
+          --ok: #57c98b;
+          --ok-soft: #17281d;
+          --bad: #f07178;
+          --bad-soft: #2c1a1c;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          17px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 2.5rem;
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem 6rem;
+      }
+      nav.toc {
+        position: sticky;
+        top: 2.5rem;
+        align-self: start;
+        font-size: 0.9rem;
+      }
+      nav.toc strong {
+        display: block;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.6rem;
+      }
+      nav.toc ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      nav.toc li {
+        margin: 0.35rem 0;
+      }
+      nav.toc a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+      nav.toc a:hover {
+        color: var(--accent);
+      }
+      main {
+        min-width: 0;
+      }
+      main > header {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1.25rem;
+        margin-bottom: 2rem;
+      }
+      main > header h1 {
+        font-size: 1.9rem;
+        line-height: 1.2;
+        margin: 0 0 0.6rem;
+      }
+      main > header .lead {
+        color: var(--muted);
+        margin: 0;
+        max-width: var(--measure);
+      }
+      section {
+        margin-bottom: 3.5rem;
+      }
+      section h2 {
+        font-size: 1.4rem;
+        margin: 0 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--border);
+      }
+      section h3 {
+        font-size: 1.05rem;
+        margin: 2rem 0 0.6rem;
+      }
+      section p,
+      section ul,
+      section ol {
+        max-width: var(--measure);
+      }
+      li {
+        margin: 0.3rem 0;
+      }
+      pre,
+      .code-block {
+        white-space: pre-wrap;
+        overflow-x: auto;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.9rem 1.1rem;
+        font:
+          0.86rem/1.55 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Consolas,
+          monospace;
+        tab-size: 2;
+      }
+      pre .del {
+        color: var(--bad);
+      }
+      pre .add {
+        color: var(--ok);
+      }
+      pre .hi {
+        background: var(--accent-soft);
+        border-radius: 3px;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9em;
+        background: var(--surface);
+        padding: 0.05rem 0.3rem;
+        border-radius: 4px;
+      }
+      .filename {
+        font-size: 0.78rem;
+        color: var(--muted);
+        font-family: ui-monospace, monospace;
+        margin: 1.5rem 0 0.3rem;
+      }
+      table.vals {
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+        font-size: 0.86rem;
+        width: 100%;
+        max-width: 620px;
+      }
+      table.vals th,
+      table.vals td {
+        border: 1px solid var(--border);
+        padding: 0.4rem 0.65rem;
+        text-align: left;
+      }
+      table.vals th {
+        background: var(--surface);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+      }
+      table.vals td.yes {
+        background: var(--ok-soft);
+      }
+      table.vals td.no {
+        background: var(--bad-soft);
+      }
+      table.vals td.warn {
+        background: var(--edge-soft);
+      }
+      .callout {
+        background: var(--accent-soft);
+        border-left: 3px solid var(--accent);
+        border-radius: 0 6px 6px 0;
+        padding: 0.85rem 1.1rem;
+        margin: 1.5rem 0;
+        max-width: var(--measure);
+      }
+      .callout .label {
+        display: block;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+      }
+      .callout.edge {
+        background: var(--edge-soft);
+        border-left-color: var(--edge);
+      }
+      .callout.edge .label {
+        color: var(--edge);
+      }
+      details.skippable {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem 1.1rem;
+        margin: 1.25rem 0;
+      }
+      details.skippable > summary {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.92rem;
+        color: var(--muted);
+      }
+      details.skippable[open] > summary {
+        margin-bottom: 0.75rem;
+      }
+      .ui-mockup {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 1.5rem 0;
+        max-width: 560px;
+        font-size: 0.85rem;
+      }
+      .ui-mockup .bar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 0.5rem 0.85rem;
+        font-weight: 600;
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+      .ui-mockup .body {
+        padding: 1.1rem 0.85rem;
+        font-family: ui-monospace, monospace;
+        font-size: 0.78rem;
+        white-space: pre-wrap;
+      }
+      .mock-caption {
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin: 0.3rem 0 0;
+        max-width: var(--measure);
+      }
+      .dataflow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 1.5rem 0;
+      }
+      /* Each arrow travels with the node it points at. Without this, a flow
+         wider than the column wraps between an arrow and its node, leaving the
+         arrow pointing at nothing and the node stranded on the next line. */
+      .dataflow .step {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .dataflow .node {
+        background: var(--accent-soft);
+        border: 1px solid var(--accent);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 0.6rem 0.9rem;
+        font-size: 0.85rem;
+        text-align: center;
+        max-width: 175px;
+      }
+      .dataflow .node.terminal {
+        background: var(--surface);
+        border-color: var(--border);
+      }
+      .dataflow .node.pass {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .dataflow .node.fail {
+        background: var(--bad-soft);
+        border-color: var(--bad);
+      }
+      .dataflow .arrow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.72rem;
+        min-width: 96px;
+      }
+      .dataflow .arrow .line {
+        width: 100%;
+        border-top: 2px solid var(--border);
+        position: relative;
+      }
+      .dataflow .arrow .line::after {
+        content: "\25B6";
+        position: absolute;
+        right: -2px;
+        top: -0.72em;
+        color: var(--border);
+        font-size: 0.7rem;
+      }
+      .dataflow .arrow .data {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 0.05rem 0.35rem;
+        margin-bottom: 0.2rem;
+        font-family: ui-monospace, monospace;
+      }
+      .flow-label {
+        font-size: 0.8rem;
+        color: var(--muted);
+        font-weight: 600;
+        margin: 1.25rem 0 0.25rem;
+      }
+      .frames {
+        list-style: none;
+        padding: 0;
+        margin: 1.25rem 0;
+        max-width: 620px;
+        font-family: ui-monospace, monospace;
+        font-size: 0.82rem;
+      }
+      .frames li {
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.45rem 0.7rem;
+        margin: 0.3rem 0;
+        background: var(--surface);
+      }
+      .frames li.target {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .frames .n {
+        display: inline-block;
+        min-width: 2.2em;
+        color: var(--muted);
+      }
+      .mermaid {
+        margin: 1.75rem 0;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1rem;
+        overflow-x: auto;
+        white-space: pre;
+        font-family: ui-monospace, monospace;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .quiz-question {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1.1rem 1.25rem;
+        margin: 1.5rem 0;
+        max-width: var(--measure);
+      }
+      .quiz-question > p.q {
+        font-weight: 600;
+        margin: 0 0 0.85rem;
+      }
+      .quiz-option {
+        display: block;
+        width: 100%;
+        text-align: left;
+        background: var(--bg);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 0.6rem 0.8rem;
+        margin-bottom: 0.5rem;
+        font: inherit;
+        font-size: 0.92rem;
+        cursor: pointer;
+      }
+      .quiz-option:hover:not(:disabled) {
+        border-color: var(--accent);
+      }
+      .quiz-option.correct {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .quiz-option.incorrect {
+        background: var(--bad-soft);
+        border-color: var(--bad);
+      }
+      .quiz-option:disabled {
+        cursor: default;
+      }
+      .quiz-feedback {
+        display: none;
+        font-size: 0.88rem;
+        padding: 0.6rem 0.8rem;
+        border-radius: 7px;
+        margin-top: 0.3rem;
+      }
+      .quiz-feedback.show {
+        display: block;
+      }
+      .quiz-feedback.ok {
+        background: var(--ok-soft);
+      }
+      .quiz-feedback.bad {
+        background: var(--edge-soft);
+      }
+      @media (max-width: 800px) {
+        .layout {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 1rem;
+          padding: 1.25rem 1.1rem 4rem;
+        }
+        nav.toc {
+          position: static;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 0.75rem 1rem;
+        }
+        body {
+          font-size: 16px;
+        }
+        main > header h1 {
+          font-size: 1.6rem;
+        }
+      }
+    </style>
+  </head>
+    <body>
+    <div class="layout">
+      <nav class="toc">
+        <strong>Contents</strong>
+        <ol>
+          <li><a href="#background">Background</a></li>
+          <li><a href="#intuition">Intuition</a></li>
+          <li><a href="#code">Code walkthrough</a></li>
+          <li><a href="#quiz">Quiz</a></li>
+        </ol>
+      </nav>
+
+      <main>
+        <header>
+          <h1>Deleting an attribute moved the decision</h1>
+          <p class="lead">
+            uPortal
+            <a href="https://github.com/uPortal-Project/uPortal/pull/2983"
+              >pull request 2983</a
+            >
+            reads as find-and-replace across 17 files. Three of its lines delete
+            an attribute, and deleting it changes who works out where a file
+            lives: the server, or the browser.
+          </p>
+        </header>
+
+        <section id="background">
+          <h2>Background</h2>
+
+          <details class="skippable">
+            <summary>
+              New to uPortal skins, or to servlet contexts? Expand for the deeper
+              background.
+            </summary>
+            <p>
+              uPortal renders a page by wrapping portlets in a theme, and the
+              theme's appearance comes from a <em>skin</em>. A skin is a
+              directory plus a descriptor: an XML file listing the stylesheets
+              and scripts the page needs.
+            </p>
+            <pre>&lt;js included="plain"&gt;/resource-server/rs/underscore/1.8.3/underscore.js&lt;/js&gt;
+&lt;css included="aggregated"&gt;/resource-server/webjars/.../dataTables.bootstrap5.min.css&lt;/css&gt;</pre>
+            <p>
+              The <code>included</code> attribute says which build the entry
+              belongs to. <em>Aggregation</em> is uPortal concatenating and
+              minifying a skin's own files into one bundle, so
+              <code>aggregated</code> entries are the versions used when that
+              bundle is built.
+            </p>
+            <p>
+              Where those files come from is the subject here. A Java servlet
+              container runs several web applications side by side, each mounted
+              at a <em>context path</em>, the first segment of the URL. uPortal
+              is one context. A second one, the
+              <em>resource server</em>, carries shared front-end libraries, so
+              several portals on a server can reference the same copies. Its
+              older context path was <code>/ResourceServingWebapp/</code> and the
+              current one is <code>/resource-server/</code>.
+            </p>
+            <p>
+            </p>
+          </details>
+
+          <p>
+            Three names recur below, so they are here rather than in the
+            collapsed part. A <em>webjar</em> is a front-end library packaged as
+            a Java artifact, so a build resolves it like any other dependency.
+            <em>Aggregation</em> is uPortal concatenating and minifying a skin's
+            own files into one bundle. And <code>rs</code> is a JSP tag library
+            that the resource server ships, bound once in this codebase, used for
+            building URLs and for compressing inline scripts.
+
+          <p>
+            An entry in a skin descriptor could carry one extra attribute, and
+            this change is about what it did.
+          </p>
+
+          <p class="filename">
+            uPortal-webapp/.../media/skins/respondr/common/common_skin.xml,
+            before
+          </p>
+          <pre>    &lt;js included="plain" resource="true"&gt;/rs/underscore/1.8.3/underscore.js&lt;/js&gt;</pre>
+
+          <p>
+            Note the path: no context, just <code>/rs/...</code>. With
+            <code>resource="true"</code>, a component named below supplied the
+            missing prefix while the page rendered. Without the attribute, the
+            path is emitted as written.
+          </p>
+
+          <h3>Who resolves it</h3>
+
+          <p>
+            The theme calls into Java for every skin entry.
+          </p>
+
+          <p class="filename">
+            uPortal-webapp/src/main/resources/layout/theme/resourcesTemplates.xsl:30
+          </p>
+          <pre>&lt;xsl:template name="skinResources"&gt;
+    &lt;xsl:param name="path" /&gt;
+    &lt;xsl:variable name="resourceHelper" select="resources:getElmenentsProvider($RESOURCES_ELEMENTS_HELPER)" /&gt;
+    &lt;xsl:variable name="request" select="resources:getHttpServletRequest($CURRENT_REQUEST)" /&gt;
+    &lt;xsl:copy-of select="resources:getResourcesXmlFragment($resourceHelper, $request, $path)" /&gt;</pre>
+
+          <p>
+            That reaches a thin delegate in this repository, at
+            <code>uPortal-web/.../web/skin/ResourcesElementsXsltcHelper.java:58</code>,
+            which hands straight off to a provider bean built at
+            <code>RenderingPipelineConfiguration.java:325</code> with no context
+            path or base URL configured on it.
+          </p>
+
+          <p>
+            And then the trail leaves the repository. The class that reads the
+            attribute, <code>ResourcesElementsProviderImpl</code>, ships in
+            <code>org.jasig.resourceserver:resource-server-utils</code>, pinned
+            at <code>gradle.properties:98</code> to
+            <code>resourceServerVersion=1.5.3</code>. No copy of that jar is in
+            the checkout, so the exact prefix logic cannot be read here.
+          </p>
+
+          <div class="callout">
+            <span class="label">Key concept</span>
+            <code>resource="true"</code> is an indirection. The descriptor says
+            what it wants and lets a component decide where that lives, per
+            request, at render time. An explicit path says where it lives and
+            leaves nothing to decide. Both produce a URL; they differ in who
+            computes it and when.
+          </div>
+        </section>
+
+        <section id="intuition">
+          <h2>Intuition</h2>
+
+          <p>
+            The change deletes the attribute in three places and writes the
+            context into the path instead.
+          </p>
+
+          <pre><span class="del">-    &lt;js included="plain" resource="true"&gt;/rs/underscore/1.8.3/underscore.js&lt;/js&gt;</span>
+<span class="add">+    &lt;js included="plain"&gt;/resource-server/rs/underscore/1.8.3/underscore.js&lt;/js&gt;</span></pre>
+
+          <p>
+            One attribute out, one path segment in. It looks like the same URL
+            spelled differently. The pull request body says the two forms reach
+            byte-identical paths in the deployment the author tested, checked with
+            curl. Section 7 comes back to what this repository can say about
+            that, which is nothing.
+          </p>
+
+          <p>
+            What actually changes is who does the work, and what happens when
+            the answer is not there.
+          </p>
+
+          <pre class="mermaid">flowchart LR
+    subgraph portal["the uPortal context"]
+        direction TB
+        W["the uPortal war, built by unpacking&lt;br/&gt;the rs/ tree and every webjar into it"]
+        A["/scripts/portal-analytics.js&lt;br/&gt;a file only uPortal has"]
+    end
+
+    subgraph rserver["the /resource-server/ context, deployed separately"]
+        direction TB
+        R["the same rs/ tree and webjars,&lt;br/&gt;served by another project"]
+    end
+
+    OLD["with the attribute: /rs/underscore/1.8.3/underscore.js"]
+    NEW["without it: /resource-server/rs/underscore/1.8.3/underscore.js"]
+
+    OLD --&gt;|the provider supplies a context at render time| W
+    NEW --&gt;|the browser requests exactly this path| R
+    OLD -.-&gt;|four jsTree entries and the analytics script still use this form| A</pre>
+
+          <p>
+            The second half of that picture is written down in this repository,
+            even though the provider is not. A fixture pair under
+            <code>src/test/resources</code> records what the no-attribute form
+            produces. No test in the checkout loads those files, so they document
+            the behavior rather than asserting it.
+          </p>
+
+          <p class="filename">
+            uPortal-webapp/src/test/resources/.../web/skin/resources1.xml:30
+          </p>
+          <pre>&lt;!-- absolute won't get touched, prove the 2 don't aggregate --&gt;</pre>
+
+          <p>
+            The expected output confirms it: a path starting with
+            <code>/</code> appears in the emitted markup unchanged, and it is
+            excluded from aggregation. A relative path, by contrast, is resolved
+            against the skin directory and can be aggregated.
+          </p>
+
+          <table class="vals">
+            <tr>
+              <th></th>
+              <th><code>resource="true"</code>, path <code>/rs/...</code></th>
+              <th>no attribute, path <code>/resource-server/rs/...</code></th>
+            </tr>
+            <tr>
+              <td>Who computes the URL</td>
+              <td>the provider, on the server, per request</td>
+              <td>nobody; it is emitted as written</td>
+            </tr>
+            <tr>
+              <td>Which deployment the URL points into</td>
+              <td>whichever one the provider picks at render time</td>
+              <td>the one named in the path</td>
+            </tr>
+            <tr>
+              <td>What has to be true for it to resolve</td>
+              <td>the serving context has the file</td>
+              <td>
+                a context is deployed at <code>/resource-server/</code> and has
+                the file
+              </td>
+            </tr>
+            <tr>
+              <td>Aggregation</td>
+              <td>excluded</td>
+              <td>excluded</td>
+            </tr>
+          </table>
+
+          <p>
+            Row two is the one the diff does not show, and it is the one to be
+            careful about. uPortal's own build unpacks every webjar and the
+            resource server's <code>rs/</code> tree into its war, at
+            <code>uPortal-webapp/build.gradle:132</code> and
+            <code>:139</code>, and the war task puts both at the root. So copies
+            of these libraries were already inside uPortal.
+          </p>
+
+          <p>
+            That the old form resolved to those copies is my reading, not
+            something this repository states. The code that chose the prefix is
+            in the absent jar, and whether the external artifact happens to
+            contain these three specific paths cannot be checked here either. The
+            new form needs no reading: it names one context, literally.
+          </p>
+
+          <div class="callout edge">
+            <span class="label">Edge case</span>
+            The attribute cannot simply be replaced everywhere. Five active
+            <code>resource="true"</code> entries survive this change, and one of
+            them is
+            <code>common_skin.xml:110</code>, pointing at
+            <code>/scripts/portal-analytics.js</code>. That file is uPortal's
+            own, at
+            <code>uPortal-webapp/src/main/webapp/scripts/portal-analytics.js</code>,
+            not a resource-server asset. Rewriting that one to
+            <code>/resource-server/...</code> would name a file that is not
+            there.
+          </div>
+        </section>
+
+        <section id="code">
+          <h2>Code walkthrough</h2>
+
+          <p>
+            The flow, end to end. The theme asks for a skin's entries. A provider
+            turns each into markup. The browser requests what it is given. This
+            change edits the descriptors and JSPs that feed the first step, and
+            in three places it changes which participant decides the URL.
+          </p>
+
+          <h3>1. Six kinds of change in 17 files</h3>
+
+          <pre>$ grep '^diff --git' diff.txt | wc -l
+17</pre>
+
+          <p>
+            Six kinds of change, counted by asking which files have a removed
+            line matching each pattern:
+          </p>
+
+          <pre>$ awk '/^diff --git/{f=$3} /^-/ &amp;&amp; /ResourceServingWebapp/{print f}' diff.txt | sort -u | wc -l
+8
+$ awk '/^diff --git/{f=$3} /^-/ &amp;&amp; /resource=\"true\"/{print f}' diff.txt | sort -u | wc -l
+1
+$ awk '/^diff --git/{f=$3} /^-/ &amp;&amp; /compressJs/{print f}' diff.txt | sort -u | wc -l
+6
+$ awk '/^diff --git/{f=$3} /^-/ &amp;&amp; /rs:resourceURL/{print f}' diff.txt | sort -u | wc -l
+3</pre>
+
+          <p>
+            These groups overlap, so they do not sum to 17. One file can be in
+            several: <code>reportGraph.jsp</code> loses both
+            <code>compressJs</code> wrappers and
+            <code>resourceURL</code> tags, and <code>common_skin.xml</code> both
+            loses library entries and has entries rewritten. The union of all six
+            groups is the 17 files.
+          </p>
+
+          <table class="vals">
+            <tr>
+              <th>Kind</th>
+              <th>Files</th>
+            </tr>
+            <tr>
+              <td>
+                <code>/ResourceServingWebapp/</code> to
+                <code>/resource-server/</code> in a literal path
+              </td>
+              <td>8</td>
+            </tr>
+            <tr>
+              <td><code>resource="true"</code> removed, path made explicit</td>
+              <td>1, three entries</td>
+            </tr>
+            <tr>
+              <td>Library entries deleted, replaced by dated comments</td>
+              <td>2</td>
+            </tr>
+            <tr>
+              <td><code>&lt;rs:compressJs&gt;</code> wrappers removed</td>
+              <td>6</td>
+            </tr>
+            <tr>
+              <td>
+                <code>&lt;rs:resourceURL&gt;</code> tags removed or replaced
+              </td>
+              <td>3</td>
+            </tr>
+            <tr>
+              <td>Inline JavaScript rewritten to drop a library</td>
+              <td>2</td>
+            </tr>
+          </table>
+
+          <p>
+            Groups two and five are the same move in two languages. In the skin
+            XML the attribute goes and the path becomes literal; in a JSP the tag
+            goes and the path becomes literal.
+          </p>
+
+          <p class="filename">
+            uPortal-webapp/.../WEB-INF/jsp/Statistics/reportGraph.jsp:26
+          </p>
+          <pre><span class="del">-&lt;rs:resourceURL var="rgbcolorScriptPath" value="/rs/canvg/r144/rgbcolor-r144.min.js"/&gt;</span>
+<span class="add">+&lt;c:set var="rgbcolorScriptPath" value="/resource-server/rs/canvg/r144/rgbcolor-r144.min.js"/&gt;</span></pre>
+
+          <p>
+            A tag that computed a URL becomes a variable assignment holding one.
+            Four of them change in that file:
+          </p>
+
+          <pre>$ grep -c 'rs:resourceURL' uPortal-webapp/src/main/webapp/WEB-INF/jsp/Statistics/reportGraph.jsp
+0</pre>
+
+          <p>
+            Zero remain after the change, and the diff shows four removed.
+          </p>
+
+          <h3>2. A tag library with no remaining callers</h3>
+
+          <p>
+            Between groups four and five, the <code>rs</code> prefix stops being
+            used in any JSP or XSL file.
+          </p>
+
+          <pre>$ grep -rIn '&lt;rs:' --include='*.jsp' --include='*.xsl' .
+$ </pre>
+
+          <p>
+            No hits. The binding that makes the prefix available is still there,
+            at
+            <code>uPortal-webapp/.../WEB-INF/jsp/include.jsp:30</code>:
+          </p>
+
+          <pre>&lt;%@ taglib prefix="rs" uri="http://www.jasig.org/resource-server" %&gt;</pre>
+
+          <p>
+            The body describes the removed <code>&lt;rs:compressJs&gt;</code>
+            wrappers as already a no-op upstream, with minification moved to
+            esbuild. That is a statement about the tag's implementation, which
+            ships in the same external jar as the provider. The checkout has two
+            tag library descriptors of its own, under
+            <code>WEB-INF/tag/</code>, and neither is the resource server's; no
+            copy of its descriptor or its tag handler is here. So the claim can be
+            neither confirmed nor refuted from this repository.
+          </p>
+
+          <h3>3. Losing lodash, by hand</h3>
+
+          <p>
+            Two JSPs loaded lodash 4.17.4 with a script tag and used a handful of
+            its helpers in inline JavaScript. The change deletes the script tag
+            and writes replacements for exactly the functions each page called.
+          </p>
+
+          <p class="filename">
+            uPortal-webapp/.../WEB-INF/jsp/Invoker/sitemap.jsp:73
+          </p>
+          <pre>    // hasPath('a.b.c', obj) — supports the dot-path semantics of lodash _.has
+    function hasPath(obj, dotPath) {
+        var parts = dotPath.split('.');
+        for (var i = 0; i &lt; parts.length; i++) {
+            if (obj == null || typeof obj !== 'object' || !(parts[i] in obj)) {
+                return false;
+            }
+            obj = obj[parts[i]];
+        }
+        return true;
+    }</pre>
+
+          <p>
+            The rest is substitution: <code>_.forEach(collection, fn)</code>
+            becomes <code>collection.forEach(fn)</code>,
+            <code>_.forOwn</code> and one <code>_.forEach</code> over an object
+            become <code>Object.keys(...).forEach(...)</code>, and
+            <code>_.unescape</code>, <code>_.startCase</code>, and
+            <code>_.kebabCase</code> become local functions. The two files grow
+            because the shims and the <code>Object.keys</code> boilerplate are
+            longer than the calls they replace.
+          </p>
+
+          <pre>$ grep -rIn 'lodash' . | grep -v '^./.git/' | grep -v package-lock
+./uPortal-webapp/src/main/webapp/WEB-INF/jsp/Invoker/sitemap.jsp:73
+./uPortal-webapp/src/main/webapp/WEB-INF/jsp/Invoker/sitemap.jsp:84</pre>
+
+          <p>
+            Both remaining hits are the explanatory comments. Nothing else in the
+            repository references it.
+          </p>
+
+          <h3>4. Deleting a library, and showing the work</h3>
+
+          <p>
+            One deletion carries its own justification in the file.
+          </p>
+
+          <p class="filename">
+            uPortal-webapp/.../media/skins/respondr/common/common_skin.xml:26
+          </p>
+          <pre>    &lt;!-- modernizr removed 2026-05-06: zero Modernizr.* callsites in workspace,
+         no .no-js/.js class dependencies. Pure dead weight. --&gt;</pre>
+
+          <p>
+            The comment states its own justification, which makes it checkable.
+          </p>
+
+          <pre>$ grep -rIn -i 'modernizr' . | grep -v '^./.git/'
+uPortal-webapp/.../respondr/common/common_skin.xml:26:    &lt;!-- modernizr removed ...
+docs/architecture/subsystem-analysis.md:261:| **Modernizr** | 2.6.2 | Outdated | ...
+docs/architecture/subsystem-analysis.md:327:- Modernizr (unnecessary for modern ...
+$ grep -rIn 'no-js' . | grep -v '^./.git/'
+uPortal-webapp/.../respondr/common/common_skin.xml:27:         no .no-js/.js class ...</pre>
+
+          <p>
+            Printing the paths rather than counting them is the point here. The
+            three Modernizr hits are the comment's first line and two lines in an
+            architecture document that already listed the library as outdated. The
+            only <code>no-js</code> hit is the comment's second line. So the
+            claim holds: nothing called it, and nothing depended on the classes it
+            set.
+          </p>
+
+          <p>
+            Four polyfill entries also go from the same file, for
+            <code>core-js-bundle</code>, <code>regenerator-runtime</code>,
+            <code>whatwg-fetch</code>, and the web components bundle, along with
+            a <code>normalize.css</code> pair from
+            <code>defaultSkin/skin.xml</code>.
+          </p>
+
+          <div class="callout edge">
+            <span class="label">Where the body and the build disagree</span>
+            The body's first commit description says it dropped "the dead
+            utility-lib webjar dependencies". The skin entries are gone, and the
+            dependency declarations are not:
+            <code>uPortal-webapp/build.gradle:97</code> and
+            <code>:99</code> through <code>:101</code> still declare all four
+            webjars, with versions at
+            <code>gradle.properties:118</code>, <code>:119</code>,
+            <code>:121</code>, and <code>:122</code>. The
+            build still resolves them and still unpacks them into the war. What
+            changed is that the skin no longer tells a browser to load them.
+          </div>
+
+          <h3>5. Two data files, for different reasons</h3>
+
+          <p>
+            A path change reached two files that are not code.
+          </p>
+
+          <p>
+            The first is seed data, at
+            <code>.../tenants/sampledata/portlet-definition/skin.portlet-definition.xml:45</code>.
+            It is imported when a tenant is created, through a listener
+            configured at
+            <code>portal.properties:751</code>. So a stale path here would be
+            written into a live database at provisioning time, where no search of
+            the source tree would find it afterwards.
+          </p>
+
+          <p>
+            The second, at
+            <code>uPortal-webapp/src/test/resources/.../portlet/test_4-0.portlet.xml:48</code>,
+            is an import fixture in the 4.0 document format. No test in the
+            checkout names it. The edit keeps its paths consistent with the rest
+            of the change.
+          </p>
+
+          <h3>6. How much of the old context is left</h3>
+
+          <pre>$ grep -rIn 'ResourceServingWebapp' . | grep -v '^./.git/' | wc -l
+7
+$ grep -rIn 'resource="true"' . | grep -v '^./.git/' | wc -l
+7</pre>
+
+          <p>
+            Of the seven old-context references, two sit inside a commented-out
+            block in <code>common_skin.xml</code>, headed "Uncomment for
+            internationalization." Four are in the fixture pair from Intuition,
+            where the literal string is the input and the expected output. One is
+            in an architecture document.
+          </p>
+
+          <p>
+            Of the seven <code>resource="true"</code> occurrences, two are in
+            that same commented-out block and five are live: four jsTree entries
+            at
+            <code>common_skin.xml:99</code> through <code>:102</code>, and the
+            analytics script from the edge case above.
+          </p>
+
+          <h3>7. What the checkout cannot settle</h3>
+
+          <p>
+            Several of the body's claims cannot be checked from this checkout.
+            Here is which, and why.
+          </p>
+
+          <p>
+            Two of the body's claims check out here. The prefix swaps, the
+            deletions, and the tag removals are all in the diff as described, file
+            by file. And the Modernizr rationale holds, by the search above.
+          </p>
+
+          <p>
+            Three cannot be checked from this repository, for the same reason each
+            time: the thing they describe is not in it. Whether
+            <code>&lt;rs:compressJs&gt;</code> is a no-op depends on the external
+            jar. Whether the two forms produce byte-identical URLs depends on the
+            external deployment. And the body describes two commits, while this
+            clone has one, with the second commit's edits already folded in.
+          </p>
+
+          <p>
+            The last of those is worth following. Nothing in this repository
+            serves <code>/resource-server/</code>.
+            <code>web.xml</code> declares one static-asset servlet, Spring's,
+            mapped at <code>/resources/*</code>, and nothing maps
+            <code>/resource-server/</code>. Elsewhere a Spring handler does serve
+            <code>/webjars/**</code> from the classpath, which is a different
+            path under a different dispatcher. That context is deployed by a
+            separate project, which pins its own resource-server version. So
+            whether these paths resolve is a fact about a deployment rather than
+            about this code.
+          </p>
+
+          <p>
+            Two statements in the tree sit against each other at this commit.
+            The comment replacing the polyfill entries gives modern browser
+            support as the reason they are unnecessary.
+            <code>docs/SUPPORTED_BROWSERS.md:10</code> lists Internet Explorer
+            among supported browsers. Reading the code alone would not tell you
+            which one describes the project's intent.
+          </p>
+
+          <div class="callout">
+            <span class="label">The transferable part</span>
+            When an indirection disappears, look for what it was absorbing. An
+            attribute that resolves a path at render time can also be papering
+            over a difference between environments, and replacing it with a
+            literal makes the environment part of the source. An explicit path is
+            easier to read and to grep. The trade is
+            that the deployment now has to match what the file says, and a file
+            cannot check that.
+          </div>
+        </section>
+
+        <section id="quiz">
+          <h2>Quiz</h2>
+
+          <p>
+            Five questions about why the change is shaped the way it is. Click an
+            option to see the answer.
+          </p>
+
+          <div class="quiz-question">
+            <p class="q">
+              1. Removing <code>resource="true"</code> and writing
+              <code>/resource-server/</code> into the path changes what, at
+              runtime?
+            </p>
+            <button class="quiz-option">
+              Nothing observable. Both forms produce the same URL, which is why
+              the change is safe to make in bulk.
+            </button>
+            <button class="quiz-option">
+              The entry becomes eligible for aggregation, so the file is bundled
+              with the skin instead of requested separately.
+            </button>
+            <button class="quiz-option" data-correct>
+              Who computes the URL. A provider on the server used to supply the
+              context per request; now the path is emitted as written and the
+              browser resolves it.
+            </button>
+            <div class="quiz-feedback" role="status">
+              Both forms start with <code>/</code>, so aggregation is excluded
+              either way, and the fixture in this repository records that. The
+              body reports identical URLs in a correctly deployed environment.
+              Identical output still does not mean the same mechanism produced
+              it.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              2. Five <code>resource="true"</code> entries survive this change.
+              Why can they not all be rewritten the same way?
+            </p>
+            <button class="quiz-option">
+              They are inside a commented-out block, so editing them would have
+              no effect.
+            </button>
+            <button class="quiz-option" data-correct>
+              One of them points at <code>/scripts/portal-analytics.js</code>, a
+              file in uPortal's own webapp. The resource-server path would name
+              something that is not there.
+            </button>
+            <button class="quiz-option">
+              They are <code>css</code> entries rather than <code>js</code>, and
+              the attribute means something different for stylesheets.
+            </button>
+            <div class="quiz-feedback" role="status">
+              That is what makes the attribute an indirection rather than a
+              prefix: it resolved against whatever was serving, which for that
+              entry is the portal itself. Two of the seven occurrences are
+              indeed in a commented-out block, but the other five are live. Four
+              of those are the jsTree entries, two <code>js</code> and two
+              <code>css</code>.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              3. The Modernizr deletion carries a comment claiming zero call
+              sites and no class dependencies. What did checking the claim
+              against the repository find?
+            </p>
+            <button class="quiz-option">
+              Several call sites in the skin JavaScript, which the deletion
+              leaves broken.
+            </button>
+            <button class="quiz-option">
+              Nothing either way, since the library was loaded from a context
+              this repository does not contain.
+            </button>
+            <button class="quiz-option" data-correct>
+              The claim holds. Every remaining mention is the comment itself plus
+              one architecture document; the only <code>no-js</code> hit is
+              inside the comment.
+            </button>
+            <div class="quiz-feedback" role="status">
+              A comment that states its own justification is checkable, and this
+              one checks out. Where the library was served from does not affect
+              whether anything called it, since the call sites would be in this
+              repository's own scripts.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              4. The body says the change dropped the dead utility-library webjar
+              dependencies. What does the build file say?
+            </p>
+            <button class="quiz-option">
+              It agrees. The four webjar declarations and their version
+              properties are removed alongside the skin entries.
+            </button>
+            <button class="quiz-option" data-correct>
+              All four are still declared, with versions still set, so the build
+              still resolves them and unpacks them into the war. Only the skin
+              entries went.
+            </button>
+            <button class="quiz-option">
+              The webjars were never declared in the build; they came from the
+              resource server, so there is nothing to remove.
+            </button>
+            <div class="quiz-feedback" role="status">
+              The difference between "no longer loaded by a browser" and "no
+              longer a dependency" is the whole distance here. The files are
+              still fetched at build time and still packaged; nothing in the skin
+              now points a page at them.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              5. After this change, the <code>rs</code> tag prefix has no
+              remaining uses in any JSP or XSL, and the
+              <code>taglib</code> binding that declares it is still in
+              <code>include.jsp</code>. What does keeping the binding do?
+            </p>
+            <button class="quiz-option">
+              It keeps the external tag library on the classpath, without which
+              the removed paths would stop resolving.
+            </button>
+            <button class="quiz-option">
+              Nothing at all. An unused <code>taglib</code> directive is
+              stripped when the JSP is compiled.
+            </button>
+            <button class="quiz-option" data-correct>
+              It keeps the prefix available, so the tags remain usable without
+              re-adding the declaration, and it keeps the JSP compiler resolving
+              the tag library on every page that includes the file.
+            </button>
+            <div class="quiz-feedback" role="status">
+              A <code>taglib</code> directive is resolved at translation time
+              whether or not any tag is used, and it is not stripped. It also
+              has nothing to do with the paths: those are now plain strings in
+              the file. Whether an unused declaration should stay is a question
+              for this project.
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      document.querySelectorAll(".quiz-question").forEach(function (question) {
+        var feedback = question.querySelector(".quiz-feedback");
+
+        // Shuffle the options on every load, so the correct answer's position is
+        // random and a reader cannot fall into answering by position. Each option
+        // is re-inserted before the feedback block, which has to stay last.
+        var shuffled = Array.prototype.slice.call(
+          question.querySelectorAll(".quiz-option"),
+        );
+        for (var i = shuffled.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var swap = shuffled[i];
+          shuffled[i] = shuffled[j];
+          shuffled[j] = swap;
+        }
+        shuffled.forEach(function (option) {
+          question.insertBefore(option, feedback);
+        });
+
+        var options = question.querySelectorAll(".quiz-option");
+        options.forEach(function (option) {
+          option.addEventListener("click", function () {
+            var isCorrect = option.hasAttribute("data-correct");
+            options.forEach(function (other) {
+              other.disabled = true;
+              if (other.hasAttribute("data-correct"))
+                other.classList.add("correct");
+            });
+            if (!isCorrect) option.classList.add("incorrect");
+            feedback.classList.add("show", isCorrect ? "ok" : "bad");
+            feedback.textContent =
+              (isCorrect ? "Correct. " : "Not quite. ") + feedback.textContent;
+          });
+        });
+      });
+    </script>
+    <script>
+      // Mermaid loads without blocking: the page scripts above run first, and a slow
+      // or blocked CDN never holds up the quiz or the rest of the page. This is the
+      // only permitted external request, and it fires only when a .mermaid block is
+      // present. Leave it in place; it is a no-op on pages without a diagram.
+      (function () {
+        var blocks = document.querySelectorAll(".mermaid");
+        if (!blocks.length) return;
+
+        // mermaid.run() replaces each block's text with an SVG, so the source is
+        // gone after the first render. Stash it, because a theme change has to
+        // parse it again.
+        blocks.forEach(function (block) {
+          block.dataset.source = block.textContent;
+        });
+
+        var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+        function render() {
+          blocks.forEach(function (block) {
+            block.removeAttribute("data-processed");
+            block.textContent = block.dataset.source;
+          });
+          try {
+            window.mermaid.initialize({
+              startOnLoad: false,
+              theme: darkQuery.matches ? "dark" : "default",
+            });
+          } catch (e) {}
+          Promise.resolve(window.mermaid.run({ nodes: blocks })).catch(
+            function () {},
+          );
+        }
+
+        var s = document.createElement("script");
+        s.src =
+          "https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js";
+        s.integrity =
+          "sha384-T/0lMUdJpd2S1ZHtRiofG3htU3xPCrFVeAQ1UUE2TJwlEJSV5NUwn30kP28n238E";
+        s.crossOrigin = "anonymous";
+        s.onload = function () {
+          render();
+          // Re-render when the reader switches system theme, so the diagram does
+          // not stay light on a dark page.
+          if (darkQuery.addEventListener)
+            darkQuery.addEventListener("change", render);
+        };
+        document.head.appendChild(s);
+      })();
+    </script>
+  </body>
+</html>

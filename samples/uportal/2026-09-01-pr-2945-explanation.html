@@ -1,0 +1,1240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>uPortal PR 2945 explanation</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --surface: #f6f7f9;
+        --text: #1c2024;
+        --muted: #60646c;
+        --border: #d7dbdf;
+        --accent: #3b6cf6;
+        --accent-soft: #e8eefc;
+        --edge: #b5620a;
+        --edge-soft: #fbefe1;
+        --ok: #1a7f47;
+        --ok-soft: #e4f3ea;
+        --bad: #c62a3b;
+        --bad-soft: #fbe7e9;
+        --measure: 68ch;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #16181b;
+          --surface: #1f2226;
+          --text: #eceef0;
+          --muted: #9ba1a6;
+          --border: #33383d;
+          --accent: #7aa2ff;
+          --accent-soft: #1e2740;
+          --edge: #e08c3a;
+          --edge-soft: #2e2517;
+          --ok: #57c98b;
+          --ok-soft: #17281d;
+          --bad: #f07178;
+          --bad-soft: #2c1a1c;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          17px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 2.5rem;
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem 6rem;
+      }
+      nav.toc {
+        position: sticky;
+        top: 2.5rem;
+        align-self: start;
+        font-size: 0.9rem;
+      }
+      nav.toc strong {
+        display: block;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.6rem;
+      }
+      nav.toc ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      nav.toc li {
+        margin: 0.35rem 0;
+      }
+      nav.toc a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+      nav.toc a:hover {
+        color: var(--accent);
+      }
+      main {
+        min-width: 0;
+      }
+      main > header {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1.25rem;
+        margin-bottom: 2rem;
+      }
+      main > header h1 {
+        font-size: 1.9rem;
+        line-height: 1.2;
+        margin: 0 0 0.6rem;
+      }
+      main > header .lead {
+        color: var(--muted);
+        margin: 0;
+        max-width: var(--measure);
+      }
+      section {
+        margin-bottom: 3.5rem;
+      }
+      section h2 {
+        font-size: 1.4rem;
+        margin: 0 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--border);
+      }
+      section h3 {
+        font-size: 1.05rem;
+        margin: 2rem 0 0.6rem;
+      }
+      section p,
+      section ul,
+      section ol {
+        max-width: var(--measure);
+      }
+      li {
+        margin: 0.3rem 0;
+      }
+      pre,
+      .code-block {
+        white-space: pre-wrap;
+        overflow-x: auto;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.9rem 1.1rem;
+        font:
+          0.86rem/1.55 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Consolas,
+          monospace;
+        tab-size: 2;
+      }
+      pre .del {
+        color: var(--bad);
+      }
+      pre .add {
+        color: var(--ok);
+      }
+      pre .hi {
+        background: var(--accent-soft);
+        border-radius: 3px;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9em;
+        background: var(--surface);
+        padding: 0.05rem 0.3rem;
+        border-radius: 4px;
+      }
+      .filename {
+        font-size: 0.78rem;
+        color: var(--muted);
+        font-family: ui-monospace, monospace;
+        margin: 1.5rem 0 0.3rem;
+      }
+      table.vals {
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+        font-size: 0.86rem;
+        width: 100%;
+        max-width: 620px;
+      }
+      table.vals th,
+      table.vals td {
+        border: 1px solid var(--border);
+        padding: 0.4rem 0.65rem;
+        text-align: left;
+      }
+      table.vals th {
+        background: var(--surface);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+      }
+      table.vals td.yes {
+        background: var(--ok-soft);
+      }
+      table.vals td.no {
+        background: var(--bad-soft);
+      }
+      table.vals td.warn {
+        background: var(--edge-soft);
+      }
+      .callout {
+        background: var(--accent-soft);
+        border-left: 3px solid var(--accent);
+        border-radius: 0 6px 6px 0;
+        padding: 0.85rem 1.1rem;
+        margin: 1.5rem 0;
+        max-width: var(--measure);
+      }
+      .callout .label {
+        display: block;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+      }
+      .callout.edge {
+        background: var(--edge-soft);
+        border-left-color: var(--edge);
+      }
+      .callout.edge .label {
+        color: var(--edge);
+      }
+      details.skippable {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem 1.1rem;
+        margin: 1.25rem 0;
+      }
+      details.skippable > summary {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.92rem;
+        color: var(--muted);
+      }
+      details.skippable[open] > summary {
+        margin-bottom: 0.75rem;
+      }
+      .ui-mockup {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 1.5rem 0;
+        max-width: 560px;
+        font-size: 0.85rem;
+      }
+      .ui-mockup .bar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 0.5rem 0.85rem;
+        font-weight: 600;
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+      .ui-mockup .body {
+        padding: 1.1rem 0.85rem;
+        font-family: ui-monospace, monospace;
+        font-size: 0.78rem;
+        white-space: pre-wrap;
+      }
+      .mock-caption {
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin: 0.3rem 0 0;
+        max-width: var(--measure);
+      }
+      .dataflow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 1.5rem 0;
+      }
+      /* Each arrow travels with the node it points at. Without this, a flow
+         wider than the column wraps between an arrow and its node, leaving the
+         arrow pointing at nothing and the node stranded on the next line. */
+      .dataflow .step {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .dataflow .node {
+        background: var(--accent-soft);
+        border: 1px solid var(--accent);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 0.6rem 0.9rem;
+        font-size: 0.85rem;
+        text-align: center;
+        max-width: 175px;
+      }
+      .dataflow .node.terminal {
+        background: var(--surface);
+        border-color: var(--border);
+      }
+      .dataflow .node.pass {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .dataflow .node.fail {
+        background: var(--bad-soft);
+        border-color: var(--bad);
+      }
+      .dataflow .arrow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.72rem;
+        min-width: 96px;
+      }
+      .dataflow .arrow .line {
+        width: 100%;
+        border-top: 2px solid var(--border);
+        position: relative;
+      }
+      .dataflow .arrow .line::after {
+        content: "\25B6";
+        position: absolute;
+        right: -2px;
+        top: -0.72em;
+        color: var(--border);
+        font-size: 0.7rem;
+      }
+      .dataflow .arrow .data {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 0.05rem 0.35rem;
+        margin-bottom: 0.2rem;
+        font-family: ui-monospace, monospace;
+      }
+      .flow-label {
+        font-size: 0.8rem;
+        color: var(--muted);
+        font-weight: 600;
+        margin: 1.25rem 0 0.25rem;
+      }
+      .frames {
+        list-style: none;
+        padding: 0;
+        margin: 1.25rem 0;
+        max-width: 620px;
+        font-family: ui-monospace, monospace;
+        font-size: 0.82rem;
+      }
+      .frames li {
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.45rem 0.7rem;
+        margin: 0.3rem 0;
+        background: var(--surface);
+      }
+      .frames li.target {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .frames .n {
+        display: inline-block;
+        min-width: 2.2em;
+        color: var(--muted);
+      }
+      .mermaid {
+        margin: 1.75rem 0;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1rem;
+        overflow-x: auto;
+        white-space: pre;
+        font-family: ui-monospace, monospace;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .quiz-question {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1.1rem 1.25rem;
+        margin: 1.5rem 0;
+        max-width: var(--measure);
+      }
+      .quiz-question > p.q {
+        font-weight: 600;
+        margin: 0 0 0.85rem;
+      }
+      .quiz-option {
+        display: block;
+        width: 100%;
+        text-align: left;
+        background: var(--bg);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 0.6rem 0.8rem;
+        margin-bottom: 0.5rem;
+        font: inherit;
+        font-size: 0.92rem;
+        cursor: pointer;
+      }
+      .quiz-option:hover:not(:disabled) {
+        border-color: var(--accent);
+      }
+      .quiz-option.correct {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .quiz-option.incorrect {
+        background: var(--bad-soft);
+        border-color: var(--bad);
+      }
+      .quiz-option:disabled {
+        cursor: default;
+      }
+      .quiz-feedback {
+        display: none;
+        font-size: 0.88rem;
+        padding: 0.6rem 0.8rem;
+        border-radius: 7px;
+        margin-top: 0.3rem;
+      }
+      .quiz-feedback.show {
+        display: block;
+      }
+      .quiz-feedback.ok {
+        background: var(--ok-soft);
+      }
+      .quiz-feedback.bad {
+        background: var(--edge-soft);
+      }
+      @media (max-width: 800px) {
+        .layout {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 1rem;
+          padding: 1.25rem 1.1rem 4rem;
+        }
+        nav.toc {
+          position: static;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 0.75rem 1rem;
+        }
+        body {
+          font-size: 16px;
+        }
+        main > header h1 {
+          font-size: 1.6rem;
+        }
+      }
+    </style>
+  </head>
+    <body>
+    <div class="layout">
+      <nav class="toc">
+        <strong>Contents</strong>
+        <ol>
+          <li><a href="#background">Background</a></li>
+          <li><a href="#intuition">Intuition</a></li>
+          <li><a href="#code">Code walkthrough</a></li>
+          <li><a href="#quiz">Quiz</a></li>
+        </ol>
+      </nav>
+
+      <main>
+        <header>
+          <h1>The type was answering a question nobody asked</h1>
+          <p class="lead">
+            uPortal
+            <a href="https://github.com/uPortal-Project/uPortal/pull/2945"
+              >pull request 2945</a
+            >
+            changes a callback's type from <code>Function</code> to
+            <code>Consumer</code>. A suppression stops being needed, two
+            anonymous classes collapse to one line each, and the comment above
+            the suppression names a different check from the one the code was
+            working around.
+          </p>
+        </header>
+
+        <section id="background">
+          <h2>Background</h2>
+
+          <details class="skippable">
+            <summary>
+              New to tee streams, or to ErrorProne? Expand for the deeper
+              background.
+            </summary>
+            <p>
+              uPortal caches the output of a portlet so it can serve the same
+              fragment again without re-rendering it. To do that it needs the
+              bytes twice: once for the response going to the browser, and once
+              for the cache.
+            </p>
+            <p>
+              A <em>tee</em> stream is the plumbing fixture for that. Named after
+              the T-shaped pipe joint, it wraps one output and duplicates
+              everything written to it into a second, the branch. Write once,
+              land twice.
+            </p>
+            <p>
+              Caching has a size limit, because a large fragment is not worth
+              holding. So this codebase has a tee that stops when it has seen
+              enough: <code>LimitingTeeOutputStream</code> counts bytes, and once
+              past the maximum it points the branch at a stream that discards
+              everything. The response keeps flowing; the cache copy stops
+              growing.
+            </p>
+            <p>
+              At that moment something has to throw away the partial cache copy
+              already collected, and only the caller knows how. So the stream
+              takes a callback and invokes it when the limit is hit. The caller
+              here is <code>CachingPortletOutputHandler</code>, the class that
+              owns both the response stream and the cache buffer, and it is the
+              only production code that builds either tee.
+            </p>
+            <p>
+              One more thing to know. This project compiles with
+              <em>ErrorProne</em>, a Google tool that runs during compilation and
+              reports bug patterns the Java compiler ignores. Each check has a
+              severity: some are warnings, some fail the build. Two of them
+              appear throughout this page.
+              <code>CheckReturnValue</code> reports a call whose result is thrown
+              away. <code>UnusedVariable</code> reports a local that is written
+              and never read. Both are ErrorProne's, not the compiler's.
+            </p>
+          </details>
+
+          <p>
+            That is the whole setting, and it is worth seeing before the types.
+            One source of bytes, two destinations, a counter, and a threshold at
+            which the second destination is swapped for one that discards.
+          </p>
+
+          <p class="flow-label">Under the limit</p>
+          <div class="dataflow">
+            <div class="node terminal">portlet writes</div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">bytes</span><span class="line"></span>
+              </div>
+              <div class="node">the tee, counting</div>
+            </div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">to the browser</span
+                ><span class="line"></span>
+              </div>
+              <div class="node pass">response</div>
+            </div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">to the branch</span><span class="line"></span>
+              </div>
+              <div class="node pass">cache buffer</div>
+            </div>
+          </div>
+
+          <p class="flow-label">Once the count passes the maximum</p>
+          <div class="dataflow">
+            <div class="node terminal">portlet writes</div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">bytes</span><span class="line"></span>
+              </div>
+              <div class="node">the tee, counting</div>
+            </div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">to the browser</span
+                ><span class="line"></span>
+              </div>
+              <div class="node pass">response, unaffected</div>
+            </div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">to the branch</span><span class="line"></span>
+              </div>
+              <div class="node fail">a discarding stream</div>
+            </div>
+          </div>
+
+          <p class="mock-caption">
+            At the moment the branch is swapped, the callback fires, and the
+            partial copy already sitting in the cache buffer is thrown away. The
+            response keeps flowing either way. Everything this change touches is
+            in that one callback.
+          </p>
+
+          <p>
+            The callback used to be typed as a Guava <code>Function</code>, whose
+            wildcard return says the value is not interesting.
+          </p>
+
+          <p class="filename">
+            uPortal-rendering/.../cache/LimitingTeeOutputStream.java, before
+          </p>
+          <pre>    private final Function&lt;LimitingTeeOutputStream, ?&gt; limitReachedCallback;</pre>
+
+          <p>
+            A <code>Function</code> exists to return something. So calling one
+            and dropping the result is the pattern ErrorProne's
+            <code>CheckReturnValue</code> reports. For that check to reach a
+            Guava method, Guava has to opt its own package in, which it does
+            through a package-level annotation. That annotation lives in the
+            Guava jar, which is not part of this checkout, so the page takes it
+            from the library rather than from anything checkable here. The
+            invocation site looked like this.
+          </p>
+
+          <p class="filename">
+            uPortal-rendering/.../cache/LimitingTeeOutputStream.java, before
+          </p>
+          <pre>            if (this.limitReachedCallback != null) {
+                // Named 'unused' to satisfy ErrorProne's CheckReturnValue; the callback's
+                // signature is Function&lt;T,?&gt; but its return value is intentionally discarded.
+                @SuppressWarnings("unused")
+                Object unused = this.limitReachedCallback.apply(this);
+            }</pre>
+
+          <p>
+            Two comment lines, an annotation, and an assignment, to call one
+            callback. The pull request body says that block landed in the
+            immediately preceding pull request. The checkout is a single commit,
+            so it cannot confirm that.
+          </p>
+
+          <div class="callout">
+            <span class="label">Key concept</span>
+            A functional interface is a contract about shape, and the shape says
+            what the code intends. <code>Function&lt;T, R&gt;</code> means "hand
+            me a T and I will give you back an R".
+            <code>Consumer&lt;T&gt;</code> means "hand me a T and I will go do
+            something". The code here always wanted the second, and had been
+            written with the first.
+          </div>
+        </section>
+
+        <section id="intuition">
+          <h2>Intuition</h2>
+
+          <p>
+            Choosing the type that matches the intent removes the problem.
+            Nothing suppresses <code>CheckReturnValue</code> afterwards, because
+            there is no return value to discard:
+            <code>Consumer.accept</code> is declared <code>void</code>.
+          </p>
+
+          <table class="vals">
+            <tr>
+              <th></th>
+              <th><code>Function&lt;T, ?&gt;</code></th>
+              <th><code>Consumer&lt;T&gt;</code></th>
+            </tr>
+            <tr>
+              <td>Where it comes from</td>
+              <td><code>com.google.common.base</code></td>
+              <td><code>java.util.function</code></td>
+            </tr>
+            <tr>
+              <td>Method and return</td>
+              <td><code>apply</code>, returns a value</td>
+              <td><code>accept</code>, returns <code>void</code></td>
+            </tr>
+            <tr>
+              <td>Discarding the result</td>
+              <td class="no">a bug pattern the build checks for</td>
+              <td class="yes">not a concept that applies</td>
+            </tr>
+            <tr>
+              <td>Lambda body can be a void call</td>
+              <td class="no">no, it must produce a value</td>
+              <td class="yes">yes</td>
+            </tr>
+            <tr>
+              <td>Lines at each call site</td>
+              <td class="no">8</td>
+              <td class="yes">1</td>
+            </tr>
+          </table>
+
+          <p>
+            The last two rows are connected, and they are the part that is easy
+            to miss. The type change did not only silence a check. It changed
+            what a caller is allowed to write.
+          </p>
+
+          <h3>Why the call sites collapsed</h3>
+
+          <p>
+            Both callbacks do one thing: clear the half-collected cache. The
+            methods that do it return <code>void</code>.
+          </p>
+
+          <p>
+            In Java, a lambda whose body is a single void method call is a
+            statement, not an expression with a value. That satisfies a
+            <code>Consumer</code> and cannot satisfy a
+            <code>Function</code>, which needs something to return. So under the
+            old type, a caller had no way to write the short form, and had to
+            spell out an anonymous class ending in <code>return null</code>.
+          </p>
+
+          <p class="filename">
+            uPortal-rendering/.../cache/CachingPortletOutputHandler.java:104,
+            before. The stream call site at :130 is the same shape.
+          </p>
+          <pre>                            new Function&lt;LimitingTeeWriter, Object&gt;() {
+                                @Override
+                                public Object apply(LimitingTeeWriter input) {
+                                    // Limit hit, clear the cache
+                                    clearCachedWriter();
+                                    return null;
+                                }
+                            });</pre>
+
+          <p class="filename">
+            uPortal-rendering/.../cache/CachingPortletOutputHandler.java:104,
+            after
+          </p>
+          <pre>                            input -&gt; clearCachedWriter());</pre>
+
+          <p>
+            The old type required a value back, so the anonymous class had to end
+            in <code>return null</code>.
+          </p>
+
+          <div class="callout edge">
+            <span class="label">Edge case</span>
+            The comment in the old code says the local was "named 'unused' to
+            satisfy ErrorProne's <code>CheckReturnValue</code>". Two mechanisms
+            were at work. Storing the result is what satisfied the return-value
+            check; the annotation silenced the unused local that storing it
+            created. The walkthrough works through which one the build needed.
+          </div>
+        </section>
+
+        <section id="code">
+          <h2>Code walkthrough</h2>
+
+          <p>
+            The flow, end to end. A portlet writes bytes. The tee counts them and
+            copies them to a cache buffer. Past the limit, it redirects the
+            branch to a discarding stream and invokes the callback, which throws
+            away the partial copy. The change is entirely in how that callback is
+            typed and invoked.
+          </p>
+
+          <pre>$ grep -c '^diff --git' diff.txt
+6</pre>
+
+          <p>
+            Six files: two production classes, one caller, and three test files.
+          </p>
+
+          <h3>1. The two classes, in step</h3>
+
+          <p class="filename">
+            uPortal-rendering/.../cache/LimitingTeeOutputStream.java:32
+          </p>
+          <pre>    private final Consumer&lt;LimitingTeeOutputStream&gt; limitReachedCallback;</pre>
+
+          <p>
+            <code>LimitingTeeWriter.java:32</code> carries the same declaration
+            at the same line number, with <code>Writer</code> in place of
+            <code>OutputStream</code>. The two classes are the same design twice,
+            one for bytes and one for characters, differing in the names of their
+            counters and in which discarding sentinel they use. Every change in
+            this diff lands on both.
+          </p>
+
+          <h3>2. The invocation</h3>
+
+          <p class="filename">
+            uPortal-rendering/.../cache/LimitingTeeOutputStream.java:83
+          </p>
+          <pre>            if (this.limitReachedCallback != null) {
+<span class="del">-                // Named 'unused' to satisfy ErrorProne's CheckReturnValue; the callback's</span>
+<span class="del">-                // signature is Function&lt;T,?&gt; but its return value is intentionally discarded.</span>
+<span class="del">-                @SuppressWarnings("unused")</span>
+<span class="del">-                Object unused = this.limitReachedCallback.apply(this);</span>
+<span class="add">+                this.limitReachedCallback.accept(this);</span>
+            }</pre>
+
+          <p>
+            The null guard stays, because the three-argument constructors of both
+            classes pass <code>null</code> for the callback.
+          </p>
+
+          <h3>3. The two mechanisms, separated</h3>
+
+          <p>
+            The old block did two different things, and the comment described
+            them as one.
+          </p>
+
+          <p>
+            The <em>assignment</em> is what satisfied
+            <code>CheckReturnValue</code>. That check fires when a call's result
+            is discarded, meaning the call stands alone as a statement. Assigning
+            the result to a variable means it is no longer discarded, so the
+            check has nothing to report. Note that no
+            <code>@SuppressWarnings("CheckReturnValue")</code> appears anywhere;
+            the assignment did the work.
+          </p>
+
+          <p>
+            The <em>annotation</em> then dealt with the problem the assignment
+            created. A local variable that is written and never read draws
+            ErrorProne's <code>UnusedVariable</code>, and
+            <code>@SuppressWarnings("unused")</code> is what silences that.
+          </p>
+
+          <p>
+            Which of the two mattered for the build depends on severity, and the
+            project configures none of it.
+          </p>
+
+          <p class="filename">build.gradle:57</p>
+          <pre>    errorprone 'com.google.errorprone:error_prone_core:2.3.4'</pre>
+
+          <p>
+            There is no <code>errorprone { }</code> block anywhere in the build,
+            no per-check enable, disable, or severity override, and nothing
+            setting <code>-Werror</code>, the flag that would turn warnings into
+            build failures. So every check runs at whatever ErrorProne 2.3.4
+            ships as its default severity.
+          </p>
+
+          <p>
+            Those defaults are the one input this page cannot get from the
+            checkout. ErrorProne is a compile-time dependency, resolved from a
+            repository, and no copy of it is here to read. The values below come
+            from ErrorProne's own documentation for those two checks, not from
+            anything in uPortal, so treat the conclusion that follows as resting
+            on them.
+          </p>
+
+          <table class="vals">
+            <tr>
+              <th>Pre-fix element</th>
+              <th>What it addressed</th>
+              <th>Default severity, per ErrorProne's docs</th>
+              <th>Needed to compile</th>
+            </tr>
+            <tr>
+              <td><code>Object unused = ...</code></td>
+              <td><code>CheckReturnValue</code></td>
+              <td>error</td>
+              <td class="yes">yes</td>
+            </tr>
+            <tr>
+              <td><code>@SuppressWarnings("unused")</code></td>
+              <td><code>UnusedVariable</code></td>
+              <td>warning</td>
+              <td class="no">no</td>
+            </tr>
+          </table>
+
+          <p>
+            On those severities, the assignment was required to compile and the
+            annotation was tidying. Either way, the annotation addressed the
+            unused local, and the comment above it named the return-value check.
+          </p>
+
+          <h3>4. The call site that could not change type</h3>
+
+          <p>
+            One file in this diff is in a different package and changes for a
+            different reason.
+          </p>
+
+          <p class="filename">
+            uPortal-webapp/.../events/aggr/PortalRawEventsAggregatorImplTest.java:178
+          </p>
+          <pre>                                Boolean ignored =
+                                        ((Function&lt;PortalEvent, Boolean&gt;)
+                                                        invocation.getArguments()[3])
+                                                .apply(</pre>
+
+          <p>
+            Here the <code>Function</code> is the parameter type of the method
+            under test, so the test cannot choose a different one. The same
+            discarded-result problem applies, and the same assignment fixes it,
+            with a local named <code>ignored</code> and no annotation.
+          </p>
+
+          <p>
+            When you own the interface, change the type. When you do not, the
+            assignment is the answer. This diff contains one of each.
+          </p>
+
+          <h3>5. The argument no caller reads</h3>
+
+          <p>
+            Both classes pass themselves to the callback, and every callback in
+            the checkout ignores it. The two production lambdas are
+            <code>input -&gt; clearCachedWriter()</code> and
+            <code>input -&gt; clearCachedStream()</code>; the two test callbacks
+            reset a buffer they captured instead. No caller reads the argument.
+            <code>CachingPortletOutputHandler</code> is the only production code
+            that constructs either class; the two test files construct them eight
+            times between them.
+          </p>
+
+          <p>
+            The parameter is still declared and still supplied. Nothing in the
+            record says why it stayed. My reading is that it leaves room for a
+            callback that wants the stream, which a parameterless
+            <code>Runnable</code> would foreclose.
+          </p>
+
+          <h3>6. How far this reaches</h3>
+
+          <p>
+            The Guava import leaves five files, and
+            <code>java.util.function.Consumer</code> arrives in two. The three
+            other files need no new import, because a lambda needs none.
+          </p>
+
+          <p>
+            Guava itself stays. It is not declared in this module directly; it
+            arrives transitively as an <code>api</code> dependency of
+            <code>uPortal-utils-core</code>. Counting what remains in the module:
+          </p>
+
+          <pre>$ grep -rn 'import com.google.common' --include='*.java' uPortal-rendering/src | wc -l
+33</pre>
+
+          <p>
+            Six of those 33 are still
+            <code>com.google.common.base.Function</code>, found with:
+          </p>
+
+          <pre>$ grep -rn 'import com.google.common.base.Function' --include='*.java' uPortal-rendering/src | wc -l
+6</pre>
+
+          <p>
+            So the same import exists at six other places in this module. What
+            those six do with their <code>Function</code> is a separate question
+            from this change.
+          </p>
+
+          <p>
+            One constraint worth knowing, since it explains why the fix uses
+            what it uses. The project's <code>AGENTS.md</code> bans Java 9 and
+            later language features and APIs.
+            <code>Consumer</code> and lambdas are both Java 8, so this change
+            stays inside that rule.
+          </p>
+
+          <h3>7. What the checkout cannot confirm</h3>
+
+          <p>
+            The pull request body tells a story about how this change came to be
+            a separate pull request: a contributor proposed the
+            <code>Consumer</code> version on another branch, the author
+            force-pushed a cherry-pick onto the earlier pull request, and that
+            earlier pull request had already merged with the
+            <code>@SuppressWarnings</code> version. So this lands as a separate
+            follow-up, which the body says credits the contributor as
+            co-author.
+          </p>
+
+          <p>
+            Most of that is not checkable here. The checkout is a single commit
+            with no ancestor history, so the referenced pull requests, the
+            branch, and the force-push cannot be inspected. The file list and the
+            per-file description in the body do match the diff exactly.
+          </p>
+
+          <p>
+            The co-author credit is checkable, and it does not match. The single
+            commit carries two <code>Co-Authored-By</code> trailers, and neither
+            names the contributor the body says is credited. What that means is
+            not something the checkout can tell you; a credit can also be
+            recorded in a merge commit this clone does not have.
+          </p>
+
+          <div class="callout edge">
+            <span class="label">A value this checkout does not share</span>
+            The body says the contributor's branch carries
+            <code>resourceServerVersion=1.5.2</code> and therefore triggers the
+            underlying Guava <code>CheckReturnValue</code> check. This checkout's
+            <code>gradle.properties</code> sets that property to
+            <code>1.3.1</code>. Both statements can be true at once, since they
+            describe different branches, and the page notes it because it changes
+            what a reader can conclude: on this checkout's own classpath, it is
+            not established that the check fired at all.
+          </div>
+
+          <div class="callout">
+            <span class="label">The transferable part</span>
+            When a static-analysis tool objects and the fix is a variable you
+            immediately annotate away, read the objection again. The tool is
+            usually describing the type, not the line. A callback typed to return
+            a value it never returns produces the same complaint at every call
+            site. Changing the type removes it at all of them, and often shortens
+            the callers, because what they were working around was the return
+            value they never wanted.
+          </div>
+        </section>
+
+        <section id="quiz">
+          <h2>Quiz</h2>
+
+          <p>
+            Five questions about why the change is shaped the way it is. Click an
+            option to see the answer.
+          </p>
+
+          <div class="quiz-question">
+            <p class="q">
+              1. Under the old type, why could a caller not write
+              <code>input -&gt; clearCachedWriter()</code> and skip the anonymous
+              class?
+            </p>
+            <button class="quiz-option">
+              Guava's <code>Function</code> predates lambdas, so the compiler
+              cannot target a Guava interface with one.
+            </button>
+            <button class="quiz-option" data-correct>
+              <code>clearCachedWriter()</code> returns <code>void</code>, so that
+              lambda body produces no value, and
+              <code>Function.apply</code> has to return one.
+            </button>
+            <button class="quiz-option">
+              The wildcard in <code>Function&lt;T, ?&gt;</code> makes the return
+              type unknown at the call site, so no lambda can satisfy it.
+            </button>
+            <div class="quiz-feedback" role="status">
+              This is why the type change shortened the callers rather than only
+              quieting a check: it changed what a caller is allowed to write. Any
+              functional interface can be targeted by a lambda, Guava's included,
+              as long as the body fits its method. The wildcard is satisfiable
+              too; a body returning <code>null</code> is what the old code wrote.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              2. The old code carried
+              <code>@SuppressWarnings("unused")</code> above
+              <code>Object unused = callback.apply(this)</code>. Which check was
+              that annotation silencing?
+            </p>
+            <button class="quiz-option">
+              <code>CheckReturnValue</code>, as the comment beside it says.
+            </button>
+            <button class="quiz-option" data-correct>
+              <code>UnusedVariable</code>, on the local the assignment
+              introduced. The assignment itself is what handled
+              <code>CheckReturnValue</code>.
+            </button>
+            <button class="quiz-option">
+              Neither. It silenced the Java compiler's own unused-local warning,
+              which ErrorProne does not implement.
+            </button>
+            <div class="quiz-feedback" role="status">
+              The suppression string for the return-value check would have been
+              <code>"CheckReturnValue"</code>, and it appears nowhere. What
+              satisfied that check was storing the result instead of discarding
+              it, and the leftover variable is what needed
+              <code>"unused"</code>. The comment credited the annotation with the
+              assignment's job. Plain javac emits no unused-local warning here,
+              since the build sets no <code>-Xlint</code>.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              3. Of the two pieces of the old workaround, which one was actually
+              required for the build to pass?
+            </p>
+            <button class="quiz-option">
+              Both, since the project compiles with warnings treated as errors.
+            </button>
+            <button class="quiz-option">
+              The annotation, since an unused local is a compile error in Java.
+            </button>
+            <button class="quiz-option" data-correct>
+              The assignment. <code>CheckReturnValue</code> defaults to error,
+              while <code>UnusedVariable</code> defaults to warning and nothing
+              sets <code>-Werror</code>.
+            </button>
+            <div class="quiz-feedback" role="status">
+              The build declares ErrorProne and configures nothing else, so every
+              check runs at its default severity. That makes the annotation
+              tidying and the assignment the part that kept compilation alive. An
+              unused local is legal Java; only a tool complains about it.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              4. One test file keeps the pattern this change deletes, assigning
+              to a local named <code>ignored</code>. Why was it not converted to
+              a <code>Consumer</code> as well?
+            </p>
+            <button class="quiz-option">
+              Test code is exempt from ErrorProne, so converting it would have no
+              benefit.
+            </button>
+            <button class="quiz-option">
+              It is in a different Gradle module, and the two cannot share a
+              functional interface.
+            </button>
+            <button class="quiz-option" data-correct>
+              The <code>Function</code> there is the parameter type of the method
+              under test, so the test does not get to choose it.
+            </button>
+            <div class="quiz-feedback" role="status">
+              That contrast is the useful part of this diff: when you own the
+              interface you change the type, and when you do not, the assignment
+              is the answer. The module boundary is real but not the obstacle,
+              and ErrorProne compiles test sources the same way.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              5. The callback receives the stream or writer as its argument, and
+              no callback in the checkout reads it. What does declaring the
+              parameter still buy?
+            </p>
+            <button class="quiz-option">
+              It lets the class pass <code>this</code>, which a callback needs in
+              order to be invoked at all.
+            </button>
+            <button class="quiz-option">
+              Nothing. <code>Consumer&lt;T&gt;</code> is the only single-method
+              void interface in the JDK, so the parameter is unavoidable.
+            </button>
+            <button class="quiz-option" data-correct>
+              Room for a callback that wants to inspect the stream that hit the
+              limit. A parameterless interface would foreclose that.
+            </button>
+            <div class="quiz-feedback" role="status">
+              <code>Runnable</code> is the parameterless equivalent and would fit
+              every current caller, so the parameter is a choice rather than a
+              requirement. Invoking a callback needs no argument, and the JDK has
+              several void functional interfaces, including
+              <code>Runnable</code> and <code>BiConsumer</code>.
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      document.querySelectorAll(".quiz-question").forEach(function (question) {
+        var feedback = question.querySelector(".quiz-feedback");
+
+        // Shuffle the options on every load, so the correct answer's position is
+        // random and a reader cannot fall into answering by position. Each option
+        // is re-inserted before the feedback block, which has to stay last.
+        var shuffled = Array.prototype.slice.call(
+          question.querySelectorAll(".quiz-option"),
+        );
+        for (var i = shuffled.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var swap = shuffled[i];
+          shuffled[i] = shuffled[j];
+          shuffled[j] = swap;
+        }
+        shuffled.forEach(function (option) {
+          question.insertBefore(option, feedback);
+        });
+
+        var options = question.querySelectorAll(".quiz-option");
+        options.forEach(function (option) {
+          option.addEventListener("click", function () {
+            var isCorrect = option.hasAttribute("data-correct");
+            options.forEach(function (other) {
+              other.disabled = true;
+              if (other.hasAttribute("data-correct"))
+                other.classList.add("correct");
+            });
+            if (!isCorrect) option.classList.add("incorrect");
+            feedback.classList.add("show", isCorrect ? "ok" : "bad");
+            feedback.textContent =
+              (isCorrect ? "Correct. " : "Not quite. ") + feedback.textContent;
+          });
+        });
+      });
+    </script>
+    <script>
+      // Mermaid loads without blocking: the page scripts above run first, and a slow
+      // or blocked CDN never holds up the quiz or the rest of the page. This is the
+      // only permitted external request, and it fires only when a .mermaid block is
+      // present. Leave it in place; it is a no-op on pages without a diagram.
+      (function () {
+        var blocks = document.querySelectorAll(".mermaid");
+        if (!blocks.length) return;
+
+        // mermaid.run() replaces each block's text with an SVG, so the source is
+        // gone after the first render. Stash it, because a theme change has to
+        // parse it again.
+        blocks.forEach(function (block) {
+          block.dataset.source = block.textContent;
+        });
+
+        var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+        function render() {
+          blocks.forEach(function (block) {
+            block.removeAttribute("data-processed");
+            block.textContent = block.dataset.source;
+          });
+          try {
+            window.mermaid.initialize({
+              startOnLoad: false,
+              theme: darkQuery.matches ? "dark" : "default",
+            });
+          } catch (e) {}
+          Promise.resolve(window.mermaid.run({ nodes: blocks })).catch(
+            function () {},
+          );
+        }
+
+        var s = document.createElement("script");
+        s.src =
+          "https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js";
+        s.integrity =
+          "sha384-T/0lMUdJpd2S1ZHtRiofG3htU3xPCrFVeAQ1UUE2TJwlEJSV5NUwn30kP28n238E";
+        s.crossOrigin = "anonymous";
+        s.onload = function () {
+          render();
+          // Re-render when the reader switches system theme, so the diagram does
+          // not stay light on a dark page.
+          if (darkQuery.addEventListener)
+            darkQuery.addEventListener("change", render);
+        };
+        document.head.appendChild(s);
+      })();
+    </script>
+  </body>
+</html>
