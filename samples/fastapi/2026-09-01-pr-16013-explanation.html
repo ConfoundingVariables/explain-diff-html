@@ -11,9 +11,10 @@
         --text: #1c2024;
         --muted: #60646c;
         --border: #d7dbdf;
-        --accent: #3b6cf6;
+        --border-strong: #848c95;
+        --accent: #2f5ee0;
         --accent-soft: #e8eefc;
-        --edge: #b5620a;
+        --edge: #a35608;
         --edge-soft: #fbefe1;
         --ok: #1a7f47;
         --ok-soft: #e4f3ea;
@@ -28,6 +29,7 @@
           --text: #eceef0;
           --muted: #9ba1a6;
           --border: #33383d;
+          --border-strong: #646c75;
           --accent: #7aa2ff;
           --accent-soft: #1e2740;
           --edge: #e08c3a;
@@ -56,6 +58,12 @@
           Helvetica,
           Arial,
           sans-serif;
+      }
+      a {
+        color: var(--accent);
+      }
+      a:visited {
+        color: var(--accent);
       }
       .layout {
         display: grid;
@@ -181,7 +189,7 @@
       }
       table.vals th,
       table.vals td {
-        border: 1px solid var(--border);
+        border: 1px solid var(--border-strong);
         padding: 0.4rem 0.65rem;
         text-align: left;
       }
@@ -226,7 +234,7 @@
         color: var(--edge);
       }
       details.skippable {
-        border: 1px solid var(--border);
+        border: 1px solid var(--border-strong);
         border-radius: 8px;
         padding: 0.75rem 1.1rem;
         margin: 1.25rem 0;
@@ -241,7 +249,7 @@
         margin-bottom: 0.75rem;
       }
       .ui-mockup {
-        border: 1px solid var(--border);
+        border: 1px solid var(--border-strong);
         border-radius: 10px;
         overflow: hidden;
         margin: 1.5rem 0;
@@ -377,7 +385,7 @@
         color: var(--muted);
       }
       .quiz-question {
-        border: 1px solid var(--border);
+        border: 1px solid var(--border-strong);
         border-radius: 10px;
         padding: 1.1rem 1.25rem;
         margin: 1.5rem 0;
@@ -431,6 +439,33 @@
       .quiz-feedback.bad {
         background: var(--edge-soft);
       }
+      a:focus-visible,
+      summary:focus-visible,
+      .quiz-option:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
+      }
+      table.vals td.yes::before,
+      .dataflow .node.pass::before,
+      .tnode.kept::before,
+      .quiz-option.correct::before {
+        content: "\2713\00a0";
+        font-weight: 700;
+      }
+      table.vals td.no::before,
+      .dataflow .node.fail::before,
+      .quiz-option.incorrect::before {
+        content: "\2717\00a0";
+        font-weight: 700;
+      }
+      table.vals td.warn::before {
+        content: "\25B2\00a0";
+        font-weight: 700;
+      }
+      .tnode.skipped::before {
+        content: "\2013\00a0";
+        font-weight: 700;
+      }
       @media (max-width: 800px) {
         .layout {
           grid-template-columns: minmax(0, 1fr);
@@ -452,7 +487,7 @@
       }
     </style>
   </head>
-    <body>
+  <body>
     <div class="layout">
       <nav class="toc">
         <strong>Contents</strong>
@@ -473,8 +508,8 @@
               >pull request 16013</a
             >
             adds a lock to a route cache. The change that fixes the bug is
-            smaller than the lock: the rebuilt list is assigned before the version
-            is stamped, and that order is what the fast path depends on.
+            smaller than the lock: the rebuilt list is assigned before the
+            version is stamped, and that order is what the fast path depends on.
           </p>
         </header>
 
@@ -490,14 +525,16 @@
               A FastAPI application is a tree of routers. You group endpoints
               into an <code>APIRouter</code>, then attach it:
             </p>
-            <pre>router = APIRouter()
+            <pre>
+router = APIRouter()
 
 @router.get("/items/{id}")
 def read_item(id: int):
     return {"id": id}
 
 app = FastAPI()
-app.include_router(router, prefix="/api")</pre>
+app.include_router(router, prefix="/api")</pre
+            >
             <p>
               Routers nest, and each level can add a prefix, dependencies, tags,
               and response settings. So the path a request matches, and the
@@ -506,9 +543,9 @@ app.include_router(router, prefix="/api")</pre>
             </p>
             <p>
               Walking that tree on every request would be wasteful, so FastAPI
-              flattens it once and caches the result. The cache is invalidated by
-              a version number: add a route anywhere in the tree and the version
-              changes, and the next request rebuilds.
+              flattens it once and caches the result. The cache is invalidated
+              by a version number: add a route anywhere in the tree and the
+              version changes, and the next request rebuilds.
             </p>
             <p>
               That leaves a lazy cache, which is a small piece of shared mutable
@@ -519,8 +556,8 @@ app.include_router(router, prefix="/api")</pre>
             <p>
               One term for the rest of the page. A <em>data race</em> is two
               threads touching the same state with no agreement about order, so
-              what each one observes depends on timing. That timing dependence is
-              what makes the symptoms hard to trace back to one cause.
+              what each one observes depends on timing. That timing dependence
+              is what makes the symptoms hard to trace back to one cause.
             </p>
           </details>
 
@@ -535,10 +572,12 @@ app.include_router(router, prefix="/api")</pre>
           </p>
 
           <p class="filename">fastapi/routing.py:1571</p>
-          <pre>@dataclass
+          <pre>
+@dataclass
 class _IncludedRouter(BaseRoute):
     original_router: "APIRouter"
-    include_context: _RouterIncludeContext</pre>
+    include_context: _RouterIncludeContext</pre
+          >
 
           <p>
             The version is not a plain counter on one router. It is a sum over
@@ -547,7 +586,8 @@ class _IncludedRouter(BaseRoute):
           </p>
 
           <p class="filename">fastapi/routing.py:2530</p>
-          <pre>    def _get_routes_version(self, seen: set[int] | None = None) -&gt; int:
+          <pre>
+    def _get_routes_version(self, seen: set[int] | None = None) -&gt; int:
         if seen is None:
             seen = set()
         router_id = id(self)
@@ -558,7 +598,8 @@ class _IncludedRouter(BaseRoute):
         for route in self.routes:
             if isinstance(route, _IncludedRouter):
                 version += route.original_router._get_routes_version(seen)
-        return version</pre>
+        return version</pre
+          >
 
           <p>
             Six methods bump a router's own counter:
@@ -577,18 +618,20 @@ class _IncludedRouter(BaseRoute):
           </p>
 
           <p class="filename">fastapi/routing.py, before the change</p>
-          <pre>        self._effective_candidates = []
+          <pre>
+        self._effective_candidates = []
         candidates = self.original_router.routes
         for route in candidates:
             ...
             self._effective_candidates.append(route_context)
         self._effective_candidates_version = routes_version
-        return self._effective_candidates</pre>
+        return self._effective_candidates</pre
+          >
 
           <div class="callout">
             <span class="label">Key concept</span>
-            The first line installs an empty list where other threads can see it.
-            Everything after it fills that list in place. So for the whole
+            The first line installs an empty list where other threads can see
+            it. Everything after it fills that list in place. So for the whole
             duration of the rebuild, the cache attribute holds a list that is
             real, reachable, and wrong.
           </div>
@@ -606,8 +649,8 @@ class _IncludedRouter(BaseRoute):
           <p>
             The discussion is titled "Router-tree lazy rebuild (0.137.0+) is not
             thread-safe: valid routes can 404 under concurrent first requests".
-            Its author reports three effects. The first is the one that reaches a
-            user. The third column is my reading of how long each lasts, not
+            Its author reports three effects. The first is the one that reaches
+            a user. The third column is my reading of how long each lasts, not
             something the report states.
           </p>
 
@@ -652,7 +695,8 @@ class _IncludedRouter(BaseRoute):
 
           <h3>How two threads get there</h3>
 
-          <pre class="mermaid">sequenceDiagram
+          <pre class="mermaid">
+sequenceDiagram
     autonumber
     participant A as Thread A
     participant C as the cache. shared state
@@ -669,7 +713,8 @@ class _IncludedRouter(BaseRoute):
     A-&gt;&gt;C: append into the list B just replaced
     A-&gt;&gt;C: set version to current
     B-&gt;&gt;C: reads a list that is neither complete nor its own
-    B--)B: a valid route 404s</pre>
+    B--)B: a valid route 404s</pre
+          >
 
           <p>
             Step 8 is the one to look at. Thread A stamps the version while
@@ -687,21 +732,23 @@ class _IncludedRouter(BaseRoute):
           <p>
             The first is a lock, with the version re-checked after acquiring it.
             That is the standard double-checked pattern: the check outside the
-            lock keeps a warm cache from paying for synchronization at all. It is
-            not free, since computing the version walks the subtree, but it costs
-            no lock.
+            lock keeps a warm cache from paying for synchronization at all. It
+            is not free, since computing the version walks the subtree, but it
+            costs no lock.
           </p>
 
           <p>
             The second is that the list is built into a local variable and
             assigned to the attribute in one statement, once complete. This is
-            the change that fixes the bug, and the reason is that a reader on the
-            fast path never takes the lock. A lock alone would still leave that
-            reader looking at a partially filled list. Building locally means the
-            attribute only ever holds a finished list.
+            the change that fixes the bug, and the reason is that a reader on
+            the fast path never takes the lock. A lock alone would still leave
+            that reader looking at a partially filled list. Building locally
+            means the attribute only ever holds a finished list.
           </p>
 
-          <p class="flow-label">Before: the container is shared while filling</p>
+          <p class="flow-label">
+            Before: the container is shared while filling
+          </p>
           <div class="dataflow">
             <div class="node terminal">rebuild starts</div>
             <div class="step">
@@ -718,7 +765,9 @@ class _IncludedRouter(BaseRoute):
             </div>
           </div>
 
-          <p class="flow-label">After: the container is private while filling</p>
+          <p class="flow-label">
+            After: the container is private while filling
+          </p>
           <div class="dataflow">
             <div class="node terminal">rebuild starts</div>
             <div class="step">
@@ -740,11 +789,12 @@ class _IncludedRouter(BaseRoute):
             <span class="label">Edge case</span>
             The two publishing lines are ordered, and the order carries the
             invariant. In <code>fastapi/routing.py:1608-1609</code> the list is
-            assigned first and the version second. A reader who lands between them sees the new
-            complete list with the old version, fails the check, takes the lock,
-            and gets the published list from the re-check. Swap the two lines and
-            that same reader sees the new version with the old list, passes the
-            check, and returns stale data that nothing will ever correct.
+            assigned first and the version second. A reader who lands between
+            them sees the new complete list with the old version, fails the
+            check, takes the lock, and gets the published list from the
+            re-check. Swap the two lines and that same reader sees the new
+            version with the old list, passes the check, and returns stale data
+            that nothing will ever correct.
           </div>
         </section>
 
@@ -765,7 +815,8 @@ class _IncludedRouter(BaseRoute):
           <h3>1. The whole method</h3>
 
           <p class="filename">fastapi/routing.py:1587</p>
-          <pre>    def effective_candidates(self) -&gt; list["_EffectiveRouteContext | _IncludedRouter"]:
+          <pre>
+    def effective_candidates(self) -&gt; list["_EffectiveRouteContext | _IncludedRouter"]:
         routes_version = self.original_router._get_routes_version()
         if routes_version == self._effective_candidates_version:
             return self._effective_candidates
@@ -780,7 +831,8 @@ class _IncludedRouter(BaseRoute):
                 ...
             self._effective_candidates = effective_candidates
             self._effective_candidates_version = routes_version
-            return effective_candidates</pre>
+            return effective_candidates</pre
+          >
 
           <p>
             Four things to name: the duplicated check, the local list, the
@@ -840,8 +892,9 @@ class _IncludedRouter(BaseRoute):
           </p>
 
           <p>
-            The first three rows are states this code produces. The fourth is the
-            counterfactual, and the only one where the reader has no way back.
+            The first three rows are states this code produces. The fourth is
+            the counterfactual, and the only one where the reader has no way
+            back.
           </p>
 
           <table class="vals">
@@ -870,7 +923,9 @@ class _IncludedRouter(BaseRoute):
               <td class="yes">passes the check, returns it</td>
             </tr>
             <tr>
-              <td class="no">the counterfactual: after a stamp, had the lines been swapped</td>
+              <td class="no">
+                the counterfactual: after a stamp, had the lines been swapped
+              </td>
               <td>new</td>
               <td class="no">the previous list, or the empty default</td>
               <td class="no">passes the check, never corrected</td>
@@ -881,41 +936,42 @@ class _IncludedRouter(BaseRoute):
 
           <p>
             Both methods end with <code>return effective_candidates</code>, the
-            local variable, rather than <code>return self._effective_candidates</code>.
+            local variable, rather than
+            <code>return self._effective_candidates</code>.
           </p>
 
           <p>
             At this commit that makes no observable difference. The return value
-            is evaluated while the thread still holds the lock, and both writes to
-            those attributes happen under that same lock, so no other thread can
-            have replaced either one in between. Returning the local would still
-            hold if something later wrote the attribute without the lock. Whether
-            that was the reason, the record does not say.
+            is evaluated while the thread still holds the lock, and both writes
+            to those attributes happen under that same lock, so no other thread
+            can have replaced either one in between. Returning the local would
+            still hold if something later wrote the attribute without the lock.
+            Whether that was the reason, the record does not say.
           </p>
 
           <h3>6. The nested-router asymmetry</h3>
 
           <p>
             Inside the rebuild, a nested router becomes a fresh
-            <code>_IncludedRouter</code> object, constructed on the spot. The two
-            methods then do opposite things with it, so read this before either
-            one.
+            <code>_IncludedRouter</code> object, constructed on the spot. The
+            two methods then do opposite things with it, so read this before
+            either one.
           </p>
 
           <p>
             <code>effective_candidates</code> appends the child into the list it
             publishes, so the child survives. Callers reach it through the
             parent's cached list and call its own
-            <code>effective_candidates</code>, which fills the child's own cache.
-            So a nested router's cache is reused across requests. It is discarded
-            whenever the parent rebuilds, because the parent then constructs a
-            new child object, and the old one becomes garbage along with its warm
-            cache and its lock.
+            <code>effective_candidates</code>, which fills the child's own
+            cache. So a nested router's cache is reused across requests. It is
+            discarded whenever the parent rebuilds, because the parent then
+            constructs a new child object, and the old one becomes garbage along
+            with its warm cache and its lock.
           </p>
 
           <p>
-            <code>effective_low_priority_routes</code> does not keep the child at
-            all. It builds one, calls the child's method once, extends the
+            <code>effective_low_priority_routes</code> does not keep the child
+            at all. It builds one, calls the child's method once, extends the
             flattened result into its own list, and drops the child. So that
             recursion always runs against a cold cache.
           </p>
@@ -928,8 +984,8 @@ class _IncludedRouter(BaseRoute):
             <code>isinstance</code> check reads during a rebuild, and the
             rebuild then constructs a second and stores it in the parent's
             candidate cache. A third exists only while a low-priority rebuild is
-            in flight, and is dropped when it ends. None of them share a cache or
-            a lock.
+            in flight, and is dropped when it ends. None of them share a cache
+            or a lock.
           </p>
 
           <p>
@@ -943,13 +999,13 @@ class _IncludedRouter(BaseRoute):
 
           <h3>7. The two tests</h3>
 
-          <p class="filename">
-            tests/test_router_include_context.py:903
-          </p>
-          <pre>def test_included_router_candidate_cache_is_thread_safe():
+          <p class="filename">tests/test_router_include_context.py:903</p>
+          <pre>
+def test_included_router_candidate_cache_is_thread_safe():
     router = APIRouter()
     route_count = 120
-    thread_count = 6</pre>
+    thread_count = 6</pre
+          >
 
           <p>
             The test uses the same shape as the discussion's example code, 120
@@ -960,10 +1016,12 @@ class _IncludedRouter(BaseRoute):
             assertions, at lines 929 to 932:
           </p>
 
-          <pre>    assert len(results) == thread_count
+          <pre>
+    assert len(results) == thread_count
     assert all(result is results[0] for result in results)
     assert len(results[0]) == route_count
-    assert TestClient(app).get("/items/0").json() == {"index": 0}</pre>
+    assert TestClient(app).get("/items/0").json() == {"index": 0}</pre
+          >
 
           <p>
             The second is the interesting one. It uses
@@ -982,19 +1040,19 @@ class _IncludedRouter(BaseRoute):
             either the report or this page has.
           </p>
 
-          <p class="filename">
-            tests/test_router_include_context.py:935
-          </p>
-          <pre>def test_included_router_low_priority_cache_rechecks_version_after_lock(monkeypatch):</pre>
+          <p class="filename">tests/test_router_include_context.py:935</p>
+          <pre>
+def test_included_router_low_priority_cache_rechecks_version_after_lock(monkeypatch):</pre
+          >
 
           <p>
             The second test targets the branch that only exists because of this
             change: the early return inside the lock. It holds the lock on the
             main thread, starts a worker, waits on an
-            <code>Event</code> to prove the worker has already failed the outside
-            check, then sets the version to current and releases the lock. The
-            worker acquires it, re-checks, finds the version now matches, and
-            returns early.
+            <code>Event</code> to prove the worker has already failed the
+            outside check, then sets the version to current and releases the
+            lock. The worker acquires it, re-checks, finds the version now
+            matches, and returns early.
           </p>
 
           <p>
@@ -1046,8 +1104,8 @@ class _IncludedRouter(BaseRoute):
             variable is about what everyone else can see while it happens, and
             those are different problems. Then order the publishing writes so
             that the flag saying "this is ready" is written last. Anything else
-            leaves a window in which the flag says ready and the state is not, and a
-            reader that trusts the flag has no way to find out otherwise.
+            leaves a window in which the flag says ready and the state is not,
+            and a reader that trusts the flag has no way to find out otherwise.
           </div>
         </section>
 
@@ -1055,8 +1113,8 @@ class _IncludedRouter(BaseRoute):
           <h2>Quiz</h2>
 
           <p>
-            Five questions about why the change is shaped the way it is. Click an
-            option to see the answer.
+            Five questions about why the change is shaped the way it is. Click
+            an option to see the answer.
           </p>
 
           <div class="quiz-question">
@@ -1102,17 +1160,17 @@ class _IncludedRouter(BaseRoute):
               still find the emptied list mid-rebuild.
             </button>
             <button class="quiz-option">
-              Yes for the 404s, no for the duplicated entries, since appends from
-              two threads would still interleave.
+              Yes for the 404s, no for the duplicated entries, since appends
+              from two threads would still interleave.
             </button>
             <div class="quiz-feedback" role="status">
               That is the difference between what the lock fixes and what the
               local list fixes. A commenter on the discussion put it directly:
               "The second point is important even with a lock: publishing a
               mutable empty list before it is complete creates an observable
-              invalid state." The lock does fix the
-              duplication, since only one thread appends at a time. It does
-              nothing for the reader that trusts a stamped version.
+              invalid state." The lock does fix the duplication, since only one
+              thread appends at a time. It does nothing for the reader that
+              trusts a stamped version.
             </div>
           </div>
 
@@ -1126,8 +1184,8 @@ class _IncludedRouter(BaseRoute):
               first value read is stale by then.
             </button>
             <button class="quiz-option">
-              Because <code>threading.Lock</code> is not reentrant, so the second
-              check prevents a recursive call from rebuilding twice.
+              Because <code>threading.Lock</code> is not reentrant, so the
+              second check prevents a recursive call from rebuilding twice.
             </button>
             <button class="quiz-option" data-correct>
               Because another thread may have completed the whole rebuild while
@@ -1154,8 +1212,8 @@ class _IncludedRouter(BaseRoute):
             </button>
             <button class="quiz-option" data-correct>
               Two instances with identical routers and contexts would never
-              compare equal, because the generated equality includes the lock and
-              a lock only equals itself.
+              compare equal, because the generated equality includes the lock
+              and a lock only equals itself.
             </button>
             <button class="quiz-option">
               Every instance would share one lock, since dataclasses reuse a
@@ -1178,12 +1236,12 @@ class _IncludedRouter(BaseRoute):
               Why is that not a deadlock?
             </p>
             <button class="quiz-option">
-              The recursion happens before the lock is acquired, so the two never
-              overlap.
+              The recursion happens before the lock is acquired, so the two
+              never overlap.
             </button>
             <button class="quiz-option">
-              The child inherits the parent's lock, and Python allows a thread to
-              re-acquire a lock it already owns.
+              The child inherits the parent's lock, and Python allows a thread
+              to re-acquire a lock it already owns.
             </button>
             <button class="quiz-option" data-correct>
               The child is a separate object with its own lock, freshly
