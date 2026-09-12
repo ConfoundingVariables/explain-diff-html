@@ -1301,8 +1301,10 @@ def test_included_router_low_priority_cache_rechecks_version_after_lock(monkeypa
             });
             if (!isCorrect) option.classList.add("incorrect");
             feedback.classList.add("show", isCorrect ? "ok" : "bad");
-            feedback.textContent =
-              (isCorrect ? "Correct. " : "Not quite. ") + feedback.textContent;
+            feedback.insertBefore(
+              document.createTextNode(isCorrect ? "Correct. " : "Not quite. "),
+              feedback.firstChild,
+            );
           });
         });
       });

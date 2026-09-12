@@ -1184,8 +1184,10 @@ fix(broadcast-client): recover from errors thrown while applying an incoming cro
             });
             if (!isCorrect) option.classList.add("incorrect");
             feedback.classList.add("show", isCorrect ? "ok" : "bad");
-            feedback.textContent =
-              (isCorrect ? "Correct. " : "Not quite. ") + feedback.textContent;
+            feedback.insertBefore(
+              document.createTextNode(isCorrect ? "Correct. " : "Not quite. "),
+              feedback.firstChild,
+            );
           });
         });
       });
