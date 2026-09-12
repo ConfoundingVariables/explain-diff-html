@@ -25,7 +25,7 @@ failing part way through a run.
 | ------ | ---------------------------------------- | ------------------------------------------------------ |
 | `git`  | Every run                                | Resolving the base, fetching the ref, reading the diff |
 | `gh`   | Explaining a pull request                | Fetching the pull request title, body, and URL         |
-| `node` | Every run that carries a Mermaid diagram | Running the Mermaid validator through `npx`            |
+| `node` | Every run that carries a Mermaid diagram | Validating Mermaid sources in step 4, through `npx`    |
 
 Verify them up front:
 
@@ -67,15 +67,16 @@ Three details this table hides:
   run to fail.
 
 Mermaid is part of the output, not an optional extra. A state machine, an entity
-relationship, or an interaction over time reads better as a node-and-edge
-picture than as anything the hand-built families can draw. So when a change
-warrants one and `node` is absent, stop and say that Node is needed for the
-Mermaid validator. Do not silently drop the diagram, and never paste an
-unvalidated Mermaid source: an invalid source fails in the browser with no error
-the reader would notice, leaving a blank gap where the diagram should be.
+relationship, an interaction over time, or a branching or nested structure reads
+better as a node-and-edge picture than as anything the hand-built families can
+draw. So when a change warrants one and `node` is absent, stop and say that Node
+is needed for the Mermaid validator. Do not silently drop the diagram, and never
+paste an unvalidated Mermaid source: an invalid source fails in the browser with
+no error the reader would notice, leaving a blank gap where the diagram should
+be.
 
-A run whose change warrants none of those three shapes needs no Mermaid, and
-therefore no Node. The three hand-built families cover it.
+A run whose change warrants none of those four shapes needs no Mermaid, and
+therefore no Node. The hand-built families cover it.
 
 ## Output contract
 
@@ -290,6 +291,17 @@ loaded from a CDN. Match the diagram type to the change:
   the data-flow family when the ordering of messages, the waits, and the
   repeats carry the meaning; keep the data-flow family when one linear path
   with example payloads says enough.
+- A branching decision, or one thing contained inside another: a flowchart, when
+  the change turns on which branch a value takes, or when the point is that a
+  file, a context, or a component sits inside another. Subgraphs are the only
+  way any of these types draws containment. Use it sparingly: a linear path is
+  the data-flow family's job, and a flowchart drawn for a linear path wastes
+  vertical space and adds nothing.
+
+A sequence diagram is the one most often reached for by mistake. It earns its
+place when ordering, waiting, or a real back-and-forth carries the meaning. When
+both lanes are a single pass with no wait and no reply, the shape is wrong, and a
+participant talking only to itself is the tell.
 
 Validate every Mermaid source before pasting it. Write the diagram to a scratch
 `.mmd` file, run the validator, then paste the source into a

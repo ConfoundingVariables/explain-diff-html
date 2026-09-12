@@ -3,6 +3,82 @@
 A Claude Code skill that turns a code change into one self-contained HTML page
 that teaches a reader what changed and why.
 
+## Why this exists
+
+AI is helping us write code faster than ever.
+
+That's great, but there's also a side effect: we're generating more code,
+reviewing bigger changes, and sometimes understanding less of what actually
+happened.
+
+You open a PR and suddenly there are hundreds, maybe thousands, of changed lines
+across a bunch of files.
+
+Git shows you the diff file by file.
+
+`controller.ts`
+
+`service.ts`
+
+`utils.ts`
+
+tests...
+
+But that's usually not how the change actually works.
+
+So where do you start?
+
+Which file matters first? What calls what? Why was the change needed? How does
+the data move through the system?
+
+And that's where PR reviews can start becoming difficult.
+
+For me, PRs have always been one of the best ways to learn a codebase. You look
+at someone else's changes, follow the flow, understand why they made certain
+decisions, and slowly build a better mental model of the system.
+
+As AI generates more of the implementation and PRs keep getting larger, I didn't
+want to lose that learning opportunity.
+
+That's where **explain-diff-html** came from.
+
+Instead of explaining a change in the order Git happens to show the files, it
+tries to follow the **logical flow of the code**.
+
+So instead of:
+
+`file A → file B → file C`
+
+it might explain it as:
+
+`request → handler → service → transformation → result`
+
+It looks at the diff, the surrounding code, callers, related definitions,
+commits, and documentation, then turns all of that into a walkthrough that tries
+to answer a simple question:
+
+**"If I actually want to understand this PR, where should I start and how does
+everything connect?"**
+
+And it's not limited to PRs.
+
+If you're investigating a bug, you can ask the skill to do a root cause
+analysis, bug investigation, or bug identification report as additional context.
+
+The skill can use that alongside the actual code changes to connect the reported
+issue with the implementation and explain not just what changed, but also what
+went wrong, where it went wrong, and why the fix works.
+
+If you already have an RCA or investigation report from your team, you can
+provide that too.
+
+The goal isn't just to tell you what changed.
+
+The goal is to help make PR reviews, debugging, and code investigation a
+learning opportunity again.
+
+## What it produces
+
 Point it at a pull request, a branch, or a commit range. It reads the diff, then
 reads the code around the diff, then writes a single page with four sections:
 
@@ -18,12 +94,15 @@ reads the code around the diff, then writes a single page with four sections:
 The output is one HTML file with the CSS and JavaScript inline. It opens with a
 double click, reads on a phone, and follows the reader's light or dark system
 theme. Nothing needs a server, a build step, or a network round trip, with one
-exception: a page carrying a Mermaid diagram fetches the Mermaid library from a
-CDN, so that page needs network for its diagrams to draw. Everything else on it,
-including the other diagrams and the quiz, still works offline.
+exception.
 
-This is a teaching artifact, not a review. It explains a change; it does not
-judge it or propose fixes.
+That exception is Mermaid, the diagramming library these pages use for state,
+entity-relationship, sequence, and flow diagrams. A page carrying one of those
+loads Mermaid from a CDN, so it needs network for those diagrams to draw.
+Everything else on the page, including the hand-built diagrams and the quiz,
+works offline.
+
+Limitations below sets out what it deliberately does not do.
 
 ## Samples
 
@@ -46,7 +125,8 @@ instead, because GitHub serves `.html` as code rather than rendering it.
 
 Each page has been through two checks: a read-only pass that re-opens every
 cited `file:line` at the pull request head and tries to falsify each claim, and
-a cold read of the prose against the writing rules in `SKILL.md`.
+a cold read of the prose against the writing rules in `SKILL.md`, the file that
+defines the skill.
 
 ## Requirements
 
@@ -54,7 +134,7 @@ a cold read of the prose against the writing rules in `SKILL.md`.
 | ------ | ---------------------------------------- | ------------------------------------------------------ |
 | `git`  | Every run                                | Resolving the base, fetching the ref, reading the diff |
 | `gh`   | Explaining a pull request                | Fetching the pull request title, body, and URL         |
-| `node` | Every run that carries a Mermaid diagram | Running the Mermaid validator through `npx`            |
+| `node` | Every run that carries a Mermaid diagram | Validating Mermaid sources in step 4, through `npx`    |
 
 `gh` must be authenticated, not only installed. Check with `gh auth status`.
 
@@ -113,13 +193,25 @@ branch name carries one, otherwise `pr-1234`, otherwise a short slug.
 Output lands outside the repository on purpose. An explanation is not a project
 artifact, and writing it into the working tree invites committing it by accident.
 
-## What it is deliberately not
+## Limitations
 
-- Not a code review. It does not flag bugs, rank severity, or suggest changes.
-- Not a summary. A summary tells you what moved. This explains why the change
-  is shaped the way it is, which is the part a diff cannot tell you.
-- Not a living document. Each page is a snapshot of one change at one ref. When
-  the code moves on, generate a new page rather than editing the old one.
+It explains a change. It does not critique one.
+
+The page will not tell you whether the change is correct, whether the approach
+is right, or what to fix. There are no findings, no severity ratings, and no
+verdict anywhere in it. Read it to understand a pull request before you review
+it, or to learn a codebase from changes someone else made. The reviewing is
+still yours.
+
+The page also describes the pull request in whatever form it has when you run
+the skill. It is a snapshot of one diff at one ref. If the author pushes three more
+commits afterwards, the page still describes what it read, and nothing in it
+updates. Generate a new page rather than trusting an old one.
+
+One more thing to know: it explains what the record supports. Where the
+reasoning behind a change is not in the diff, the commits, the pull request
+body, or the repository's own documents, the page says so rather than inventing
+a motive.
 
 ## How it works
 
@@ -139,12 +231,12 @@ artifact, and writing it into the working tree invites committing it by accident
    target ref.
 8. Write the file.
 
-Two of those steps exist because of specific failures worth knowing about. Step
-7 checks that every code block is HTML-escaped, because a single raw `<` in a
-pasted diff line opens an element HTML never closes, which swallows the rest of
-the document and breaks every anchor below it. Step 7 also re-reads each cited
-line at the pull request head, because a stale ref produces line numbers that
-look right and point at nothing.
+Step 7 carries two checks that exist because of specific failures. It confirms
+every code block is HTML-escaped, because a single raw `<` in a pasted diff line
+opens an element HTML never closes, which swallows the rest of the document and
+breaks every anchor below it. It also re-reads each cited line at the target
+ref, because a stale ref produces line numbers that look right and point at
+nothing.
 
 ## Customizing
 
