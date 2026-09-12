@@ -3,6 +3,11 @@
 A Claude Code skill that turns a code change into one self-contained HTML page
 that teaches a reader what changed and why.
 
+![Three steps. Start with any pull request or diff. Run the skill in Claude
+Code, which reads the diff, finds related code and callers, and takes in commits
+and docs. Get back one interactive HTML page with an overview, a code-flow
+diagram, the key changes, and a short quiz.](assets/explain-diff-html-overview.png)
+
 ## Why this exists
 
 AI is helping us write code faster than ever.
