@@ -27,25 +27,26 @@ judge it or propose fixes.
 
 ## Samples
 
-Open these in a browser to see what the skill produces before installing it.
 Seven samples across three languages, each explaining a merged pull request in
-a public repository, filed under `samples/` by the repository it came from.
+a public repository.
 
-| Page                                                                    | Repository                 | Pull request                                                 | What it teaches                                                                                     |
-| ----------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
-| [PR 11305](samples/tanstack-query/2026-09-01-pr-11305-explanation.html) | TanStack/query, TypeScript | [11305](https://github.com/TanStack/query/pull/11305)        | A `?.field` guard answering two questions at once, so falsy errors never reached the error boundary |
-| [PR 11242](samples/tanstack-query/2026-09-01-pr-11242-explanation.html) | TanStack/query, TypeScript | [11242](https://github.com/TanStack/query/pull/11242)        | A guard that reset only on the happy path, and why the fix uses `finally` with no `catch`           |
-| [PR 16102](samples/fastapi/2026-09-01-pr-16102-explanation.html)        | fastapi/fastapi, Python    | [16102](https://github.com/fastapi/fastapi/pull/16102)       | A three-valued option collapsed at the public boundary, and the stack depth a warning depends on    |
-| [PR 16013](samples/fastapi/2026-09-01-pr-16013-explanation.html)        | fastapi/fastapi, Python    | [16013](https://github.com/fastapi/fastapi/pull/16013)       | Double-checked locking and build-then-publish, and why the list is assigned before the version      |
-| [PR 2924](samples/uportal/2026-09-01-pr-2924-explanation.html)          | uPortal, Java              | [2924](https://github.com/uPortal-Project/uPortal/pull/2924) | A catch that logs and falls through, and an `@Ignore` that had been skipping 30 tests               |
-| [PR 2945](samples/uportal/2026-09-01-pr-2945-explanation.html)          | uPortal, Java              | [2945](https://github.com/uPortal-Project/uPortal/pull/2945) | Picking the type that matches the intent, so a static-analysis suppression stops being needed       |
-| [PR 2983](samples/uportal/2026-09-01-pr-2983-explanation.html)          | uPortal, Java              | [2983](https://github.com/uPortal-Project/uPortal/pull/2983) | An implicit path attribute made explicit, moving resolution from the server to the browser          |
+The Page links go to the rendered pages on GitHub Pages. Opening the same files
+from the `samples/` directory in this repository shows their HTML source
+instead, because GitHub serves `.html` as code rather than rendering it.
 
-Each page was checked two ways before it shipped: a read-only pass that
-re-opened every cited `file:line` at the pull request head and tried to
-falsify each claim, and a cold read of the prose against the writing rules in
-`SKILL.md`. Between them they caught wrong line numbers, miscounts, claims the
-checkout could not support, and one diagram in the wrong family.
+| Page                                                                                                                  | Repository                 | Pull request                                                 | What it teaches                                                                                     |
+| --------------------------------------------------------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| [PR 11305](https://malav2110.github.io/explain-diff-html/samples/tanstack-query/2026-09-01-pr-11305-explanation.html) | TanStack/query, TypeScript | [11305](https://github.com/TanStack/query/pull/11305)        | A `?.field` guard answering two questions at once, so falsy errors never reached the error boundary |
+| [PR 11242](https://malav2110.github.io/explain-diff-html/samples/tanstack-query/2026-09-01-pr-11242-explanation.html) | TanStack/query, TypeScript | [11242](https://github.com/TanStack/query/pull/11242)        | A guard that reset only on the happy path, and why the fix uses `finally` with no `catch`           |
+| [PR 16102](https://malav2110.github.io/explain-diff-html/samples/fastapi/2026-09-01-pr-16102-explanation.html)        | fastapi/fastapi, Python    | [16102](https://github.com/fastapi/fastapi/pull/16102)       | A three-valued option collapsed at the public boundary, and the stack depth a warning depends on    |
+| [PR 16013](https://malav2110.github.io/explain-diff-html/samples/fastapi/2026-09-01-pr-16013-explanation.html)        | fastapi/fastapi, Python    | [16013](https://github.com/fastapi/fastapi/pull/16013)       | Double-checked locking and build-then-publish, and why the list is assigned before the version      |
+| [PR 2924](https://malav2110.github.io/explain-diff-html/samples/uportal/2026-09-01-pr-2924-explanation.html)          | uPortal, Java              | [2924](https://github.com/uPortal-Project/uPortal/pull/2924) | A catch that logs and falls through, and an `@Ignore` that had been skipping 30 tests               |
+| [PR 2945](https://malav2110.github.io/explain-diff-html/samples/uportal/2026-09-01-pr-2945-explanation.html)          | uPortal, Java              | [2945](https://github.com/uPortal-Project/uPortal/pull/2945) | Picking the type that matches the intent, so a static-analysis suppression stops being needed       |
+| [PR 2983](https://malav2110.github.io/explain-diff-html/samples/uportal/2026-09-01-pr-2983-explanation.html)          | uPortal, Java              | [2983](https://github.com/uPortal-Project/uPortal/pull/2983) | An implicit path attribute made explicit, moving resolution from the server to the browser          |
+
+Each page has been through two checks: a read-only pass that re-opens every
+cited `file:line` at the pull request head and tries to falsify each claim, and
+a cold read of the prose against the writing rules in `SKILL.md`.
 
 ## Requirements
 
