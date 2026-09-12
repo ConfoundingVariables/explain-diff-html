@@ -86,6 +86,14 @@ therefore no Node. The hand-built families cover it.
 - One long page with section headers and a table of contents. Do not use tabs
   for the top-level structure.
 - Responsive enough to read on a phone.
+- A provenance line under the lead, in the `.provenance` paragraph the template
+  carries: the source, the exact ref, and the date the page was written, as in
+  `owner/repo PR 1234 at abc1234, explained 2026-09-01`. Use the short form of
+  the same commit every `file:line` anchor was resolved against, not the branch
+  name and not the base. For a branch or a commit range, name that instead of a
+  pull request. The page is a snapshot, and this is the only thing on it that
+  says which snapshot, so a reader can tell in one glance whether the branch has
+  moved on since.
 - Written outside the repo, to `"$HOME/code-explanations"`.
 - Filename `YYYY-MM-DD-<KEY>-explanation.html`, date first so files time-sort,
   key second so they are greppable. `<KEY>` is the issue key when the branch

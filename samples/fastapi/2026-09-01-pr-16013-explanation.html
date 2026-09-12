@@ -120,6 +120,12 @@
         margin: 0;
         max-width: var(--measure);
       }
+      main > header .provenance {
+        color: var(--muted);
+        font-family: ui-monospace, monospace;
+        font-size: 0.76rem;
+        margin: 0.7rem 0 0;
+      }
       section {
         margin-bottom: 3.5rem;
       }
@@ -510,6 +516,9 @@
             adds a lock to a route cache. The change that fixes the bug is
             smaller than the lock: the rebuilt list is assigned before the
             version is stamped, and that order is what the fast path depends on.
+          </p>
+          <p class="provenance">
+            fastapi/fastapi PR 16013 at 9f919ff, explained 2026-09-01
           </p>
         </header>
 

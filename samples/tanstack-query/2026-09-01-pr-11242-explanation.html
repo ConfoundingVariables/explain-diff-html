@@ -120,6 +120,12 @@
         margin: 0;
         max-width: var(--measure);
       }
+      main > header .provenance {
+        color: var(--muted);
+        font-family: ui-monospace, monospace;
+        font-size: 0.76rem;
+        margin: 0.7rem 0 0;
+      }
       section {
         margin-bottom: 3.5rem;
       }
@@ -510,6 +516,9 @@
             adds <code>try</code> and <code>finally</code> around one callback.
             Without them, a single throw from unrelated code could stop a browser
             tab from broadcasting anything again.
+          </p>
+          <p class="provenance">
+            TanStack/query PR 11242 at a631add, explained 2026-09-01
           </p>
         </header>
 

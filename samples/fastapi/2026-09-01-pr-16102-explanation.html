@@ -120,6 +120,12 @@
         margin: 0;
         max-width: var(--measure);
       }
+      main > header .provenance {
+        color: var(--muted);
+        font-family: ui-monospace, monospace;
+        font-size: 0.76rem;
+        margin: 0.7rem 0 0;
+      }
       section {
         margin-bottom: 3.5rem;
       }
@@ -511,6 +517,9 @@
             <code>"auto"</code>. Getting that to work needed a function that
             collapses the third value immediately, and a fixed stack depth so the
             warning blames the right line.
+          </p>
+          <p class="provenance">
+            fastapi/fastapi PR 16102 at 7abcdfb, explained 2026-09-01
           </p>
         </header>
 
