@@ -390,6 +390,13 @@
         font-size: 0.8rem;
         color: var(--muted);
       }
+      .mermaid .edgeLabel,
+      .mermaid .edgeLabel p,
+      .mermaid .edgeLabel span,
+      .mermaid .edgeLabel foreignObject div {
+        background: var(--surface) !important;
+        color: var(--text) !important;
+      }
       .quiz-question {
         border: 1px solid var(--border-strong);
         border-radius: 10px;
@@ -1021,11 +1028,11 @@ fix(broadcast-client): recover from errors thrown while applying an incoming cro
             </button>
             <button class="quiz-option">
               All cache writes, since the subscriber returns before the cache is
-              updated.
+              ever updated.
             </button>
             <button class="quiz-option" data-correct>
-              Only outbound posts. Local cache writes still happen; the tab just
-              stops telling other tabs about them.
+              Only outbound posts. Local cache writes still happen, but other
+              tabs stop hearing about them.
             </button>
             <div class="quiz-feedback" role="status">
               The guard is the first statement of the cache
@@ -1044,8 +1051,8 @@ fix(broadcast-client): recover from errors thrown while applying an incoming cro
               does that assertion prove about the bug?
             </p>
             <button class="quiz-option" data-correct>
-              Nothing. It passes before and after the fix. It pins that the fix
-              did not make the error disappear.
+              Nothing about the fix. It passes before and after, pinning that
+              the error still escapes.
             </button>
             <button class="quiz-option">
               That the flag is reset, since an error can only escape
@@ -1074,13 +1081,12 @@ fix(broadcast-client): recover from errors thrown while applying an incoming cro
               failures into the handler when a message cannot be deserialized.
             </button>
             <button class="quiz-option" data-correct>
-              Cache writes notify subscribers synchronously in the same stack, so
-              any listener anywhere in the app throws straight back into the
-              callback.
+              Cache writes notify subscribers synchronously, so any listener in
+              the app throws straight back into the callback.
             </button>
             <button class="quiz-option">
-              <code>query.setState</code> validates the incoming state and throws
-              when a message from an older version of the app does not match.
+              <code>query.setState</code> validates incoming state and throws
+              when a message from an older app version does not match.
             </button>
             <div class="quiz-feedback" role="status">
               The listeners belong to the application, to devtools, or to
@@ -1107,9 +1113,8 @@ fix(broadcast-client): recover from errors thrown while applying an incoming cro
               flag that puts it ahead of application listeners.
             </button>
             <button class="quiz-option" data-correct>
-              Listeners live in a <code>Set</code> and run in insertion order, and
-              the broadcast client subscribed first, so it returns before the
-              exploding one throws.
+              Listeners run in insertion order and the broadcast client
+              subscribed first, so it returns before the throwing one runs.
             </button>
             <div class="quiz-feedback" role="status">
               Insertion order is doing real work here, and it comes from
@@ -1135,18 +1140,17 @@ fix(broadcast-client): recover from errors thrown while applying an incoming cro
               <code>catch</code> that completes normally skips it.
             </button>
             <button class="quiz-option" data-correct>
-              The error stops surfacing anywhere, so the listener bug that caused
-              this becomes invisible. The first assertion in both new tests would
-              fail.
+              The error stops surfacing, so the listener bug becomes invisible
+              and both new tests fail.
             </button>
             <div class="quiz-feedback" role="status">
               This is why the tests assert the throw. A stuck flag and a
-              swallowed exception are both silent, so one replaces the other. The
-              first option is worth taking seriously, since a listener that throws
-              really can disrupt sync; what the chosen shape does is leave that
-              listener's failure visible to whoever owns it.
+              swallowed exception are both silent, so one replaces the other.
+              Swallowing the error is worth taking seriously, since a listener
+              that throws really can disrupt sync; what the chosen shape does is
+              leave that listener's failure visible to whoever owns it.
               <code>finally</code> runs after a <code>catch</code> completes
-              normally, so the second option is not how the construct behaves.
+              normally, so skipping it is not how the construct behaves.
             </div>
           </div>
         </section>

@@ -359,6 +359,13 @@
         font-size: 0.8rem;
         color: var(--muted);
       }
+      .mermaid .edgeLabel,
+      .mermaid .edgeLabel p,
+      .mermaid .edgeLabel span,
+      .mermaid .edgeLabel foreignObject div {
+        background: var(--surface) !important;
+        color: var(--text) !important;
+      }
       .quiz-question {
         border: 1px solid var(--border-strong);
         border-radius: 10px;
@@ -1056,9 +1063,9 @@ fix(react-query): throw falsy errors from `useQueries` and `useSuspenseQueries` 
               which the explicit comparison would correctly admit.
             </button>
             <button class="quiz-option" data-correct>
-              No. <code>find</code> returns either a result object or
-              <code>undefined</code>, and every object is truthy, so both
-              conditions accept the same values. It is a readability choice.
+              No. <code>find</code> returns a result object or
+              <code>undefined</code>, and every object is truthy, so both accept
+              the same values.
             </button>
             <button class="quiz-option">
               Yes. <code>find</code> returns <code>null</code> for a hole in a
@@ -1089,12 +1096,11 @@ fix(react-query): throw falsy errors from `useQueries` and `useSuspenseQueries` 
               is explicit and takes precedence.
             </button>
             <button class="quiz-option">
-              A <code>TypeError</code> from reading <code>.error</code> of
-              <code>undefined</code>.
+              A <code>TypeError</code> from reading <code>.error</code> on an
+              <code>undefined</code> result.
             </button>
             <button class="quiz-option" data-correct>
               The component's own render output, with no data and no fallback.
-              The result reports <code>isError: true</code>, but nothing throws.
             </button>
             <button class="quiz-option">
               A permanent loading state, because the query never settles.
@@ -1119,7 +1125,7 @@ fix(react-query): throw falsy errors from `useQueries` and `useSuspenseQueries` 
             <button class="quiz-option">
               <code>useQuery</code> wraps a falsy rejection in an
               <code>Error</code> before storing it, so the value is always
-              truthy by the time it is checked.
+              truthy.
             </button>
             <button class="quiz-option">
               <code>useQuery</code> uses a different code path that checks
@@ -1151,10 +1157,8 @@ fix(react-query): throw falsy errors from `useQueries` and `useSuspenseQueries` 
               boundary silently ignores since there is no error to display.
             </button>
             <button class="quiz-option" data-correct>
-              TypeScript rejects it, because the variable is possibly
-              <code>undefined</code>. Forced past the compiler, every render
-              with no failing query would crash on a property of
-              <code>undefined</code>.
+              TypeScript rejects it, and if forced past the compiler it would
+              crash whenever no query failed.
             </button>
             <div class="quiz-feedback" role="status">
               The check is doing real work: it distinguishes "found one" from
@@ -1173,14 +1177,12 @@ fix(react-query): throw falsy errors from `useQueries` and `useSuspenseQueries` 
               <code>result.isError</code>. Does that solve the reported problem?
             </p>
             <button class="quiz-option">
-              Yes, and it is the better fix, because it puts the rule in the one
-              shared place instead of at one call site.
+              Yes, and it is the better fix, because it puts the rule in one
+              shared place.
             </button>
             <button class="quiz-option" data-correct>
-              No. It moves the same value check one layer earlier, still drops
-              <code>null</code> and <code>undefined</code> rejections, and now
-              breaks <code>useQuery</code> too, since both hooks share the
-              helper.
+              No. It moves the same check one layer earlier, still drops
+              <code>null</code>, and now breaks <code>useQuery</code> too.
             </button>
             <button class="quiz-option">
               Yes. <code>!= null</code> admits <code>0</code> and
@@ -1188,8 +1190,8 @@ fix(react-query): throw falsy errors from `useQueries` and `useSuspenseQueries` 
               boundary.
             </button>
             <div class="quiz-feedback" role="status">
-              The third option is half right, and that is what makes it
-              tempting: <code>!= null</code> does admit <code>0</code> and
+              The <code>!= null</code> answer is half right, and that is what
+              makes it tempting: <code>!= null</code> does admit <code>0</code> and
               <code>''</code>. It still rejects the
               <code>Promise.reject()</code> case, which is the case the bug
               report was about. The deeper problem is direction. Putting the

@@ -390,6 +390,13 @@
         font-size: 0.8rem;
         color: var(--muted);
       }
+      .mermaid .edgeLabel,
+      .mermaid .edgeLabel p,
+      .mermaid .edgeLabel span,
+      .mermaid .edgeLabel foreignObject div {
+        background: var(--surface) !important;
+        color: var(--text) !important;
+      }
       .quiz-question {
         border: 1px solid var(--border-strong);
         border-radius: 10px;
@@ -1185,12 +1192,12 @@ found for 27. The parameter will be ignored.</div>
             </p>
             <button class="quiz-option">
               <code>first</code> is <code>implicitModel</code> and
-              <code>second</code> is null, the same as the success path minus the
-              window.
+              <code>second</code> is null, the same as the success path.
             </button>
             <button class="quiz-option" data-correct>
-              <code>first</code> is <code>27_ctf9_142032_implicitModel</code>,
-              entity id included, and <code>second</code> is null.
+              <code>first</code> is the full
+              <code>27_ctf9_142032_implicitModel</code> string and
+              <code>second</code> is null.
             </button>
             <button class="quiz-option">
               <code>null</code>, since the catch logged and there is nothing
@@ -1213,8 +1220,8 @@ found for 27. The parameter will be ignored.</div>
               request?
             </p>
             <button class="quiz-option">
-              All 30, since <code>@Ignore</code> on a class only suppresses the
-              class-level setup, not the test methods.
+              All 30, since <code>@Ignore</code> on a class suppresses only the
+              class-level setup.
             </button>
             <button class="quiz-option">
               Only the ones without their own annotations, which the runner still
@@ -1222,7 +1229,7 @@ found for 27. The parameter will be ignored.</div>
             </button>
             <button class="quiz-option" data-correct>
               None. <code>@Ignore</code> on a JUnit 4 class skips every method in
-              it, so all 30 pre-existing tests reported as skipped.
+              it.
             </button>
             <div class="quiz-feedback" role="status">
               A skipped test is not a failing test, so a green build said nothing
@@ -1238,9 +1245,8 @@ found for 27. The parameter will be ignored.</div>
               <code>MockitoJUnitRunner.Silent</code>?
             </p>
             <button class="quiz-option" data-correct>
-              The strict runner fails the whole class when a stubbing is never
-              called, and a class that stopped running accumulates stubs for
-              calls the production code no longer makes.
+              The strict runner fails the whole class when any stubbing goes
+              unused by the code.
             </button>
             <button class="quiz-option">
               <code>Silent</code> suppresses the console output that an ignored
@@ -1248,7 +1254,7 @@ found for 27. The parameter will be ignored.</div>
             </button>
             <button class="quiz-option">
               The strict runner requires every mock to be verified, and thirty
-              old tests would each need <code>verify</code> calls added.
+              tests would need <code>verify</code> calls.
             </button>
             <div class="quiz-feedback" role="status">
               The file carries the evidence: two stubbings on a delegate window
@@ -1276,8 +1282,8 @@ found for 27. The parameter will be ignored.</div>
               <code>IllegalArgumentException</code> from any other failure.
             </button>
             <button class="quiz-option" data-correct>
-              The stack trace. The log says what failed and which parameter
-              caused it, but not the path through the registry that produced it.
+              The stack trace, so the log cannot show the path that produced the
+              failure.
             </button>
             <div class="quiz-feedback" role="status">
               SLF4J treats a trailing <code>Throwable</code> specially and prints
@@ -1301,8 +1307,8 @@ found for 27. The parameter will be ignored.</div>
               so the loop cannot reach a second match.
             </button>
             <button class="quiz-option" data-correct>
-              A later id that matches and resolves can still return a real
-              window, and a single parameter can log the warning more than once.
+              A later id can still resolve and return a real window, and one
+              parameter can warn twice.
             </button>
             <button class="quiz-option">
               The exception is rethrown once the loop ends, since a catch without

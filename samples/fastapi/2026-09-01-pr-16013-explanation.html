@@ -390,6 +390,13 @@
         font-size: 0.8rem;
         color: var(--muted);
       }
+      .mermaid .edgeLabel,
+      .mermaid .edgeLabel p,
+      .mermaid .edgeLabel span,
+      .mermaid .edgeLabel foreignObject div {
+        background: var(--surface) !important;
+        color: var(--text) !important;
+      }
       .quiz-question {
         border: 1px solid var(--border-strong);
         border-radius: 10px;
@@ -1137,8 +1144,8 @@ def test_included_router_low_priority_cache_rechecks_version_after_lock(monkeypa
               can land between them.
             </button>
             <button class="quiz-option" data-correct>
-              A current version stamp beside the old or empty list, which it
-              would return and which nothing would ever correct.
+              A current version stamp beside the old list, and nothing would ever
+              correct the mismatch.
             </button>
             <button class="quiz-option">
               A stale version with the new list, so it would rebuild
@@ -1197,8 +1204,8 @@ def test_included_router_low_priority_cache_rechecks_version_after_lock(monkeypa
               second check prevents a recursive call from rebuilding twice.
             </button>
             <button class="quiz-option" data-correct>
-              Because another thread may have completed the whole rebuild while
-              this one waited for the lock, making the work unnecessary.
+              Because another thread may have finished the rebuild while this one
+              waited for the lock.
             </button>
             <div class="quiz-feedback" role="status">
               Without it, six threads arriving at a cold cache would rebuild the
@@ -1220,20 +1227,19 @@ def test_included_router_low_priority_cache_rechecks_version_after_lock(monkeypa
               copied, which raises at runtime.
             </button>
             <button class="quiz-option" data-correct>
-              Two instances with identical routers and contexts would never
-              compare equal, because the generated equality includes the lock
-              and a lock only equals itself.
+              Two otherwise identical instances would never compare equal, since
+              a lock only equals itself.
             </button>
             <button class="quiz-option">
               Every instance would share one lock, since dataclasses reuse a
-              comparable default across instances.
+              single default object across instances.
             </button>
             <div class="quiz-feedback" role="status">
               A bare <code>@dataclass</code> generates <code>__eq__</code> from
               the tuple of fields that opt in, so a field with identity-only
               equality poisons the comparison. Per-instance locks come from
               <code>default_factory</code>, which is a different keyword and the
-              reason the third option is wrong.
+              reason the shared-default answer is wrong.
             </div>
           </div>
 
@@ -1246,7 +1252,7 @@ def test_included_router_low_priority_cache_rechecks_version_after_lock(monkeypa
             </p>
             <button class="quiz-option">
               The recursion happens before the lock is acquired, so the two
-              never overlap.
+              never overlap at all.
             </button>
             <button class="quiz-option">
               The child inherits the parent's lock, and Python allows a thread

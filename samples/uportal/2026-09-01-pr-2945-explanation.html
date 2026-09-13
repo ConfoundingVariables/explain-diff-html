@@ -390,6 +390,13 @@
         font-size: 0.8rem;
         color: var(--muted);
       }
+      .mermaid .edgeLabel,
+      .mermaid .edgeLabel p,
+      .mermaid .edgeLabel span,
+      .mermaid .edgeLabel foreignObject div {
+        background: var(--surface) !important;
+        color: var(--text) !important;
+      }
       .quiz-question {
         border: 1px solid var(--border-strong);
         border-radius: 10px;
@@ -1072,7 +1079,7 @@
             </button>
             <button class="quiz-option">
               The wildcard in <code>Function&lt;T, ?&gt;</code> makes the return
-              type unknown at the call site, so no lambda can satisfy it.
+              type unknown at the call site.
             </button>
             <div class="quiz-feedback" role="status">
               This is why the type change shortened the callers rather than only
@@ -1091,16 +1098,14 @@
               that annotation silencing?
             </p>
             <button class="quiz-option">
-              <code>CheckReturnValue</code>, as the comment beside it says.
+              <code>CheckReturnValue</code>, just as the comment beside it says.
             </button>
             <button class="quiz-option" data-correct>
-              <code>UnusedVariable</code>, on the local the assignment
-              introduced. The assignment itself is what handled
-              <code>CheckReturnValue</code>.
+              <code>UnusedVariable</code>, on the local variable that the
+              assignment introduced.
             </button>
             <button class="quiz-option">
-              Neither. It silenced the Java compiler's own unused-local warning,
-              which ErrorProne does not implement.
+              Neither. It silenced the Java compiler's own unused-local warning.
             </button>
             <div class="quiz-feedback" role="status">
               The suppression string for the return-value check would have been
@@ -1126,8 +1131,7 @@
             </button>
             <button class="quiz-option" data-correct>
               The assignment. <code>CheckReturnValue</code> defaults to error,
-              while <code>UnusedVariable</code> defaults to warning and nothing
-              sets <code>-Werror</code>.
+              <code>UnusedVariable</code> only to warning.
             </button>
             <div class="quiz-feedback" role="status">
               The build declares ErrorProne and configures nothing else, so every
@@ -1153,7 +1157,7 @@
             </button>
             <button class="quiz-option" data-correct>
               The <code>Function</code> there is the parameter type of the method
-              under test, so the test does not get to choose it.
+              under test.
             </button>
             <div class="quiz-feedback" role="status">
               That contrast is the useful part of this diff: when you own the
@@ -1178,8 +1182,8 @@
               void interface in the JDK, so the parameter is unavoidable.
             </button>
             <button class="quiz-option" data-correct>
-              Room for a callback that wants to inspect the stream that hit the
-              limit. A parameterless interface would foreclose that.
+              It leaves room for a callback that wants to inspect the stream that
+              hit the limit.
             </button>
             <div class="quiz-feedback" role="status">
               <code>Runnable</code> is the parameterless equivalent and would fit

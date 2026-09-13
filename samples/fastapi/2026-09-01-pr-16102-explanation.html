@@ -390,6 +390,13 @@
         font-size: 0.8rem;
         color: var(--muted);
       }
+      .mermaid .edgeLabel,
+      .mermaid .edgeLabel p,
+      .mermaid .edgeLabel span,
+      .mermaid .edgeLabel foreignObject div {
+        background: var(--surface) !important;
+        color: var(--text) !important;
+      }
       .quiz-question {
         border: 1px solid var(--border-strong);
         border-radius: 10px;
@@ -1256,7 +1263,7 @@ INFO:     Uvicorn running on http://127.0.0.1:8000</div>
             </p>
             <button class="quiz-option">
               <code>True</code>, because the directory is present so the
-              downstream check will pass anyway and costs nothing.
+              downstream check passes anyway.
             </button>
             <button class="quiz-option">
               <code>"auto"</code>, unchanged, because there is nothing to decide
@@ -1285,9 +1292,8 @@ INFO:     Uvicorn running on http://127.0.0.1:8000</div>
               <code>add_frontend_route</code>?
             </p>
             <button class="quiz-option" data-correct>
-              So that user code lands in position 3 on both paths, letting a
-              single <code>stacklevel=3</code> attribute the warning correctly
-              for each.
+              Because user code lands in position 3 on both paths, one
+              <code>stacklevel=3</code> works for each.
             </button>
             <button class="quiz-option">
               Because <code>add_frontend_route</code> is public API and cannot
@@ -1319,8 +1325,8 @@ INFO:     Uvicorn running on http://127.0.0.1:8000</div>
               same location by default, so the second is suppressed.
             </button>
             <button class="quiz-option" data-correct>
-              The first call returned a <code>bool</code>, so the second exits at
-              <code>check_dir != "auto"</code> and never reaches the warn.
+              The first call returned a <code>bool</code>, so the second exits
+              before reaching the warning.
             </button>
             <button class="quiz-option">
               <code>FastAPI.frontend</code> passes <code>check_dir=None</code>
@@ -1350,13 +1356,12 @@ INFO:     Uvicorn running on http://127.0.0.1:8000</div>
               second signature change.
             </button>
             <button class="quiz-option">
-              It makes the argument positional, so the resolved value cannot be
-              passed to the wrong parameter.
+              It makes the argument positional, so the value cannot go to the
+              wrong parameter.
             </button>
             <button class="quiz-option" data-correct>
-              A future call site that forgets to pass the resolved value fails
-              loudly with <code>TypeError</code>, instead of silently
-              reinstating the strict behavior.
+              A call site that forgets to pass the resolved value fails with a
+              <code>TypeError</code>.
             </button>
             <div class="quiz-feedback" role="status">
               The payoff is for call sites nobody has written yet. A silent
@@ -1376,20 +1381,18 @@ INFO:     Uvicorn running on http://127.0.0.1:8000</div>
             </p>
             <button class="quiz-option">
               Nothing significant. It puts the decision next to the check that
-              acts on it, which is where a reader would look for it.
+              acts on it, where a reader would look.
             </button>
             <button class="quiz-option" data-correct>
-              The warning can no longer be attributed to user code with one
-              <code>stacklevel</code>, because that class sits at a different
-              depth depending on the entry point, and an environment-dependent
-              decision spreads into a layer whose job is to execute one.
+              One <code>stacklevel</code> can no longer point the warning at user
+              code, since the class depth varies per entry point.
             </button>
             <button class="quiz-option">
               It would break <code>check_dir=False</code>, since a class that
               reads the environment cannot honor an explicit argument.
             </button>
             <div class="quiz-feedback" role="status">
-              The first option is a real argument, which is what makes it worth
+              Locality is a real argument, which is what makes it worth
               considering. Locality is a virtue, and the original directory check
               does live in that class. What defeats it is the stack.
               Attribution depends on the distance to the caller, and the deeper

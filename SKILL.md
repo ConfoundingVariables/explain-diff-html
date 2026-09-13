@@ -20,6 +20,11 @@ Built on Geoffrey Litt's explain-diff gist, which set out the four-section
 structure, the quiz, and the self-contained HTML output:
 <https://gist.github.com/geoffreylitt/a29df1b5f9865506e8952488eac3d524>
 
+Three of the question shapes in step 5, and the rule that difficulty belongs in
+the stem rather than in near-identical options, are adapted from the
+learning-opportunities skill by Cat Hicks, used under CC-BY-4.0:
+<https://github.com/DrCatHicks/learning-opportunities>
+
 ## Requirements
 
 Check each tool before you rely on it, and name the missing one rather than
@@ -383,10 +388,24 @@ the template's own tokens so the diagrams match the page:
 | Failure or rejected path    | `#fbe7e9` | `#c62a3b` |
 | Edge case or caveat         | `#fbefe1` | `#b5620a` |
 
-Apply them with `classDef`. Use the neutral fill as the default and add at most
-three of the meaning-carrying roles to one diagram; past that, the colors stop
-distinguishing anything. The template's loader initializes Mermaid with the
-light default theme, so these fills are chosen to read on a white canvas.
+Apply them with `classDef`, and give every `classDef` an explicit `color:` for
+the label text:
+
+```
+classDef ok fill:#e4f3ea,stroke:#1a7f47,color:#16181b
+```
+
+Use the neutral fill as the default and add at most three of the
+meaning-carrying roles to one diagram; past that, the colors stop
+distinguishing anything.
+
+The `color:` is not optional. The template's loader switches Mermaid to its
+dark theme when the reader's system is dark, and that theme paints node labels
+a light grey. The fills above stay light regardless, because `classDef` writes
+them with `!important`. A label left to the theme therefore lands at about
+1.4:1 against its own node, and the diagram is unreadable in dark mode while
+looking correct in light mode. Pinning the text dark holds in both themes and
+measures above 15:1 on every fill in the table.
 
 Use callouts for key concepts, definitions, and important edge cases.
 
@@ -408,8 +427,18 @@ Build the five questions from these shapes, at most two of any one shape:
   reversed.
 - When would the other choice win. Ask under what circumstances the rejected
   alternative would have been right, which is the strongest test of transfer.
+- Connect two mechanisms. Ask a question neither mechanism answers alone, so the
+  reader has to hold both at once. A page that explains three mechanisms
+  separately and then tests each separately never finds out whether the reader
+  joined them up.
+- Apply it elsewhere. Take the concept the change turns on and ask how it would
+  land at a different site in the same codebase, one the page has already named.
+  Knowledge tied to a single context tends to stay tied to it.
+- Name the general principle. Ask what the change is an instance of, and make
+  the distractors neighboring principles rather than wrong facts. This is the
+  shape that survives longest after the reader forgets the diff.
 
-Five rules bind every question, whichever shape it takes:
+Seven rules bind every question, whichever shape it takes:
 
 - Avoid any question whose answer can be copied straight out of the diff. If a
   reader who has not understood the change can still answer it by pattern
@@ -421,6 +450,16 @@ Five rules bind every question, whichever shape it takes:
 - Ground each distractor in a plausible misunderstanding, not an obviously
   wrong throwaway. A distractor a reader can eliminate without thinking teaches
   nothing, and it makes the correct answer findable by elimination.
+- Keep the options within one question the same length. A reader who has not
+  understood picks the longest option, and the correct answer attracts length
+  because it is the one carrying its own justification. No option may run more
+  than about a quarter longer than the shortest in its question. Then count
+  across the whole quiz: if the longest option is the correct one in more than
+  one or two of the five questions, the page can be answered by word count no
+  matter where the answers sit. The fix is not to pad the distractors, which
+  makes every option unreadable. It is to cut the reasoning out of the correct
+  option and put it in the feedback block, which is where the reasoning belongs,
+  leaving each option as a bare claim.
 - Vary where the correct option sits in the source. The template's script
   shuffles the options on every page load, so position is random for the reader
   either way. Vary it anyway: write each question with its correct answer first,
@@ -432,6 +471,12 @@ Five rules bind every question, whichever shape it takes:
   cannot refer to another by position: no "both of the above", no "the first
   option but for the router path". The feedback block may discuss the options by
   their content, never by their order.
+- Make a question harder by giving less setup, never by making the options more
+  alike. Difficulty belongs in what the reader has to work out, not in how
+  finely they have to read. Options that differ by a word or two test attention;
+  a stem that withholds a step tests understanding. This also stops the length
+  rule above from being satisfied the wrong way, by grinding three options into
+  near-identical strings nobody can tell apart.
 
 This is a static file, so it cannot pause for the reader's input and respond to
 it. When the reader wants that fuller, interactive method, offer to run a live
@@ -521,6 +566,37 @@ failures the catalogue misses:
 
 - Every unused template placeholder is deleted. A stray `FILL:` comment or an
   empty diagram block ships as a blank box on the page.
+
+- The quiz is not answerable without reading it. Count the words in every option
+  and check two things: that no option in a question runs more than about a
+  quarter longer than the shortest, and that the longest option is the correct
+  one in no more than one or two of the five questions. Guessing "longest"
+  should do no better than guessing at random, and this is the one quiz defect
+  that survives the shuffle, because shuffling changes position and not length.
+
+- No quiz feedback names an option by its position. The script shuffles the
+  options on every page load, so "the first option" points at a different option
+  than the one the sentence means, and the reader is sent to the wrong text.
+  Name the option by its content instead. This check is mechanical:
+
+  ```bash
+  grep -nEi 'the (first|second|third|last) option|the (former|latter)' "$out"
+  ```
+
+  Expect no hits inside the quiz section. Stating the rule is not enough on its
+  own; it has been violated by authors who had it in front of them.
+
+- The page is checked in dark mode, not only in light. Any Mermaid diagram is
+  the thing that breaks here: the loader switches Mermaid's theme with the
+  reader's system, while `classDef` fills do not follow, so a diagram that reads
+  correctly in light mode can be unreadable in dark mode. Confirm every node
+  label and edge label is legible against what sits behind it.
+
+- The page is checked at 400px wide, and nothing scrolls sideways. A wide
+  comparison table is the usual cause. The template scrolls `table.vals` in its
+  own box at narrow widths, so a table may overflow its container, but the
+  document must not: `document.documentElement.scrollWidth` has to equal the
+  viewport width.
 
 - Every number the page states about the change is produced by a command, not by
   looking at a snippet: files changed, lines or characters added or removed,

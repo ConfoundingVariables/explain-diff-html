@@ -390,6 +390,13 @@
         font-size: 0.8rem;
         color: var(--muted);
       }
+      .mermaid .edgeLabel,
+      .mermaid .edgeLabel p,
+      .mermaid .edgeLabel span,
+      .mermaid .edgeLabel foreignObject div {
+        background: var(--surface) !important;
+        color: var(--text) !important;
+      }
       .quiz-question {
         border: 1px solid var(--border-strong);
         border-radius: 10px;
@@ -1104,9 +1111,8 @@ $ grep -rIn 'resource="true"' . | grep -v '^./.git/' | wc -l
               with the skin instead of requested separately.
             </button>
             <button class="quiz-option" data-correct>
-              Who computes the URL. A provider on the server used to supply the
-              context per request; now the path is emitted as written and the
-              browser resolves it.
+              Who computes the URL. The server used to supply the context; now
+              the browser resolves it.
             </button>
             <div class="quiz-feedback" role="status">
               Both forms start with <code>/</code>, so aggregation is excluded
@@ -1127,9 +1133,8 @@ $ grep -rIn 'resource="true"' . | grep -v '^./.git/' | wc -l
               no effect.
             </button>
             <button class="quiz-option" data-correct>
-              One of them points at <code>/scripts/portal-analytics.js</code>, a
-              file in uPortal's own webapp. The resource-server path would name
-              something that is not there.
+              One points at <code>/scripts/portal-analytics.js</code>, a file in
+              uPortal's own webapp, not the resource server.
             </button>
             <button class="quiz-option">
               They are <code>css</code> entries rather than <code>js</code>, and
@@ -1152,17 +1157,16 @@ $ grep -rIn 'resource="true"' . | grep -v '^./.git/' | wc -l
               against the repository find?
             </p>
             <button class="quiz-option">
-              Several call sites in the skin JavaScript, which the deletion
-              leaves broken.
+              Several call sites in the skin JavaScript, which the deletion would
+              leave broken.
             </button>
             <button class="quiz-option">
               Nothing either way, since the library was loaded from a context
               this repository does not contain.
             </button>
             <button class="quiz-option" data-correct>
-              The claim holds. Every remaining mention is the comment itself plus
-              one architecture document; the only <code>no-js</code> hit is
-              inside the comment.
+              The claim holds. The only remaining mentions are the comment and
+              one architecture document.
             </button>
             <div class="quiz-feedback" role="status">
               A comment that states its own justification is checkable, and this
@@ -1182,9 +1186,8 @@ $ grep -rIn 'resource="true"' . | grep -v '^./.git/' | wc -l
               properties are removed alongside the skin entries.
             </button>
             <button class="quiz-option" data-correct>
-              All four are still declared, with versions still set, so the build
-              still resolves them and unpacks them into the war. Only the skin
-              entries went.
+              All four are still declared with versions set, so the build still
+              unpacks them. Only the skin entries were removed.
             </button>
             <button class="quiz-option">
               The webjars were never declared in the build; they came from the
@@ -1214,9 +1217,8 @@ $ grep -rIn 'resource="true"' . | grep -v '^./.git/' | wc -l
               stripped when the JSP is compiled.
             </button>
             <button class="quiz-option" data-correct>
-              It keeps the prefix available, so the tags remain usable without
-              re-adding the declaration, and it keeps the JSP compiler resolving
-              the tag library on every page that includes the file.
+              It keeps the prefix available, so the tags stay usable without
+              re-adding the declaration.
             </button>
             <div class="quiz-feedback" role="status">
               A <code>taglib</code> directive is resolved at translation time
