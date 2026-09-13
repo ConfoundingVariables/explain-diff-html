@@ -180,6 +180,7 @@
         background: var(--surface);
         padding: 0.05rem 0.3rem;
         border-radius: 4px;
+        overflow-wrap: anywhere;
       }
       /* Path label for the code block below it. */
       .filename {
@@ -187,6 +188,7 @@
         color: var(--muted);
         font-family: ui-monospace, monospace;
         margin: 1.5rem 0 0.3rem;
+        overflow-wrap: anywhere;
       }
       /* Comparison table: one row per case, .yes / .no / .warn on outcome cells. */
       table.vals {
@@ -460,6 +462,13 @@
         font-size: 0.8rem;
         color: var(--muted);
       }
+      .mermaid .edgeLabel,
+      .mermaid .edgeLabel p,
+      .mermaid .edgeLabel span,
+      .mermaid .edgeLabel foreignObject div {
+        background: var(--surface) !important;
+        color: var(--text) !important;
+      }
       /* Quiz */
       .quiz-question {
         border: 1px solid var(--border-strong);
@@ -560,6 +569,11 @@
         }
         main > header h1 {
           font-size: 1.6rem;
+        }
+        table.vals {
+          display: block;
+          overflow-x: auto;
+          max-width: 100%;
         }
       }
     </style>
