@@ -16,6 +16,10 @@ Turn a code change into one long, self-contained HTML page that teaches a
 reader what changed and why. The output is a teaching artifact, not a review:
 it explains, it does not judge or propose fixes.
 
+Built on Geoffrey Litt's explain-diff gist, which set out the four-section
+structure, the quiz, and the self-contained HTML output:
+<https://gist.github.com/geoffreylitt/a29df1b5f9865506e8952488eac3d524>
+
 ## Requirements
 
 Check each tool before you rely on it, and name the missing one rather than

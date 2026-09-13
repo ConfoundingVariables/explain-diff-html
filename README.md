@@ -8,6 +8,15 @@ Code, which reads the diff, finds related code and callers, and takes in commits
 and docs. Get back one interactive HTML page with an overview, a code-flow
 diagram, the key changes, and a short quiz.](assets/explain-diff-html-overview.png)
 
+## Origin
+
+This started from [Geoffrey Litt's explain-diff gist](https://gist.github.com/geoffreylitt/a29df1b5f9865506e8952488eac3d524),
+which set out the four-section structure, the quiz, the self-contained HTML
+output, and the skill's name. This version adds flow-ordered walkthroughs,
+verified `file:line` anchors at the target ref, Mermaid diagrams with
+validation, a provenance line, and a set of checks built from specific
+failures.
+
 ## Why this exists
 
 AI is helping us write code faster than ever.
