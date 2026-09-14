@@ -19,6 +19,9 @@ failures.
 
 ## Why this exists
 
+<details>
+<summary>Bigger PRs, and why Git's file order hides how they work.</summary>
+
 AI is helping us write code faster than ever.
 
 That's great, but there's also a side effect: we're generating more code,
@@ -76,20 +79,17 @@ everything connect?"**
 
 And it's not limited to PRs.
 
-If you're investigating a bug, you can ask the skill to do a root cause
-analysis, bug investigation, or bug identification report as additional context.
+Hand it a bug investigation or an RCA alongside the diff, and it connects the
+reported failure to the fix.
 
-The skill can use that alongside the actual code changes to connect the reported
-issue with the implementation and explain not just what changed, but also what
-went wrong, where it went wrong, and why the fix works.
-
-If you already have an RCA or investigation report from your team, you can
-provide that too.
+Where it helps, below, covers that and the other uses.
 
 The goal isn't just to tell you what changed.
 
 The goal is to help make PR reviews, debugging, and code investigation a
 learning opportunity again.
+
+</details>
 
 ## What it produces
 
@@ -118,6 +118,30 @@ works offline.
 
 Limitations below sets out what it deliberately does not do.
 
+## Where it helps
+
+<details>
+<summary>Onboarding, machine-written changes, and post-mortems.</summary>
+
+The main use is reading a pull request before you review it. Three others come
+up often.
+
+Onboarding. Point it at the old merged pull request that introduced something
+foundational rather than at documentation written a year ago. A new hire gets a
+walkthrough built from the code as it actually is.
+
+Large or machine-written changes. Git orders a diff by path, so a change
+spanning controllers, services, and models arrives in an order nobody wrote it
+in. The page orders it by the path a request takes. That matters most on pull
+requests an agent produced, where the volume outruns what a reviewer can hold
+at once.
+
+Bug fixes and post-mortems. Hand the skill your incident report or
+investigation notes alongside the diff. The page connects the reported failure
+to the fix, so the reader sees where the bug lived and why the patch closes it.
+
+</details>
+
 ## Samples
 
 Eight samples across three languages, each explaining a merged pull request in
@@ -145,6 +169,9 @@ defines the skill.
 
 ## Requirements
 
+<details>
+<summary>git, gh, and node, plus what runs on which platform.</summary>
+
 | Tool   | Needed when                              | Used for                                               |
 | ------ | ---------------------------------------- | ------------------------------------------------------ |
 | `git`  | Every run                                | Resolving the base, fetching the ref, reading the diff |
@@ -161,6 +188,8 @@ and on Windows through WSL or Git Bash. Windows PowerShell and `cmd.exe` are not
 supported: they have no `command -v`, no `$(...)` substitution, and none of
 `mktemp`, `sed`, or `openssl`. The generated page itself is plain HTML and opens
 in any browser on any platform.
+
+</details>
 
 ## Install
 
@@ -230,6 +259,9 @@ a motive.
 
 ## How it works
 
+<details>
+<summary>The eight steps, and two checks that exist because of bugs.</summary>
+
 `SKILL.md` drives Claude Code through eight steps. In outline:
 
 1. Resolve the target and the filename key, detecting the repository's default
@@ -253,7 +285,12 @@ breaks every anchor below it. It also re-reads each cited line at the target
 ref, because a stale ref produces line numbers that look right and point at
 nothing.
 
+</details>
+
 ## Customizing
+
+<details>
+<summary>Colors, diagram families, and the pinned Mermaid version.</summary>
 
 Everything visual lives in `html-template.html`, which the skill fills in rather
 than rebuilding per run:
@@ -269,6 +306,8 @@ than rebuilding per run:
   browser block the script and the diagrams then fail silently.
 - The output directory and the filename pattern are in `SKILL.md`, under the
   output contract.
+
+</details>
 
 ## License
 
