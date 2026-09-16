@@ -311,6 +311,9 @@ than rebuilding per run:
   browser block the script and the diagrams then fail silently.
 - The output directory and the filename pattern are in `SKILL.md`, under the
   output contract.
+- Every page ends with a credit line: "Generated with explain-diff-html",
+  linked to this repository. Delete the `<footer class="colophon">` element to
+  remove it. The `.colophon` rules style nothing else, so delete those too.
 
 </details>
 

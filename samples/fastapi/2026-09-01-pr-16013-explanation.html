@@ -126,6 +126,18 @@
         font-size: 0.76rem;
         margin: 0.7rem 0 0;
       }
+      .colophon {
+        grid-column: 1 / -1;
+        color: var(--muted);
+        font-family: ui-monospace, monospace;
+        font-size: 0.76rem;
+        border-top: 1px solid var(--border);
+        margin: 4rem 0 0;
+        padding: 1.2rem 0 0;
+      }
+      .colophon a {
+        color: inherit;
+      }
       section {
         margin-bottom: 3.5rem;
       }
@@ -1274,6 +1286,13 @@ def test_included_router_low_priority_cache_rechecks_version_after_lock(monkeypa
           </div>
         </section>
       </main>
+
+      <footer class="colophon">
+        Generated with
+        <a href="https://github.com/malav2110/explain-diff-html"
+          >explain-diff-html</a
+        >
+      </footer>
     </div>
 
     <script>
