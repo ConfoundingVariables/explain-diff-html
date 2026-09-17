@@ -1,0 +1,1332 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>jsdom v30.1.0: replacing the tree under the DOM</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --surface: #f6f7f9;
+        --text: #1c2024;
+        --muted: #60646c;
+        --border: #d7dbdf;
+        --border-strong: #848c95;
+        --accent: #2f5ee0;
+        --accent-soft: #e8eefc;
+        --edge: #a35608;
+        --edge-soft: #fbefe1;
+        --ok: #1a7f47;
+        --ok-soft: #e4f3ea;
+        --bad: #c62a3b;
+        --bad-soft: #fbe7e9;
+        --measure: 68ch;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #16181b;
+          --surface: #1f2226;
+          --text: #eceef0;
+          --muted: #9ba1a6;
+          --border: #33383d;
+          --border-strong: #646c75;
+          --accent: #7aa2ff;
+          --accent-soft: #1e2740;
+          --edge: #e08c3a;
+          --edge-soft: #2e2517;
+          --ok: #57c98b;
+          --ok-soft: #17281d;
+          --bad: #f07178;
+          --bad-soft: #2c1a1c;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          17px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+      }
+      a {
+        color: var(--accent);
+      }
+      a:visited {
+        color: var(--accent);
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 2.5rem;
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem 6rem;
+      }
+      nav.toc {
+        position: sticky;
+        top: 2.5rem;
+        align-self: start;
+        font-size: 0.9rem;
+      }
+      nav.toc strong {
+        display: block;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.6rem;
+      }
+      nav.toc ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      nav.toc li {
+        margin: 0.35rem 0;
+      }
+      nav.toc a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+      nav.toc a:hover {
+        color: var(--accent);
+      }
+      main {
+        min-width: 0;
+      }
+      main > header {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1.25rem;
+        margin-bottom: 2rem;
+      }
+      main > header h1 {
+        font-size: 1.9rem;
+        line-height: 1.2;
+        margin: 0 0 0.6rem;
+      }
+      main > header .lead {
+        color: var(--muted);
+        margin: 0;
+        max-width: var(--measure);
+      }
+      main > header .provenance {
+        color: var(--muted);
+        font-family: ui-monospace, monospace;
+        font-size: 0.76rem;
+        margin: 0.7rem 0 0;
+      }
+      .colophon {
+        grid-column: 1 / -1;
+        color: var(--muted);
+        font-family: ui-monospace, monospace;
+        font-size: 0.76rem;
+        border-top: 1px solid var(--border);
+        margin: 4rem 0 0;
+        padding: 1.2rem 0 0;
+      }
+      .colophon a {
+        color: inherit;
+      }
+      section {
+        margin-bottom: 3.5rem;
+      }
+      section h2 {
+        font-size: 1.4rem;
+        margin: 0 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--border);
+      }
+      section h3 {
+        font-size: 1.05rem;
+        margin: 2rem 0 0.6rem;
+      }
+      section p,
+      section ul,
+      section ol {
+        max-width: var(--measure);
+      }
+      li {
+        margin: 0.3rem 0;
+      }
+      /* Code blocks: white-space set here so a filled-in block cannot collapse. */
+      pre,
+      .code-block {
+        white-space: pre-wrap;
+        overflow-x: auto;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.9rem 1.1rem;
+        font:
+          0.86rem/1.55 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Consolas,
+          monospace;
+        tab-size: 2;
+      }
+      pre .del {
+        color: var(--bad);
+      }
+      pre .add {
+        color: var(--ok);
+      }
+      pre .hi {
+        background: var(--accent-soft);
+        border-radius: 3px;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9em;
+        background: var(--surface);
+        padding: 0.05rem 0.3rem;
+        border-radius: 4px;
+        overflow-wrap: anywhere;
+      }
+      /* Path label for the code block below it. */
+      .filename {
+        font-size: 0.78rem;
+        color: var(--muted);
+        font-family: ui-monospace, monospace;
+        margin: 1.5rem 0 0.3rem;
+        overflow-wrap: anywhere;
+      }
+      /* Comparison table: one row per case, .yes / .no / .warn on outcome cells. */
+      table.vals {
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+        font-size: 0.86rem;
+        width: 100%;
+        max-width: 620px;
+      }
+      table.vals th,
+      table.vals td {
+        border: 1px solid var(--border-strong);
+        padding: 0.4rem 0.65rem;
+        text-align: left;
+      }
+      table.vals th {
+        background: var(--surface);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+      }
+      table.vals td.yes {
+        background: var(--ok-soft);
+      }
+      table.vals td.no {
+        background: var(--bad-soft);
+      }
+      table.vals td.warn {
+        background: var(--edge-soft);
+      }
+      /* Callouts: .callout for a concept, .callout.edge for a caveat. */
+      .callout {
+        background: var(--accent-soft);
+        border-left: 3px solid var(--accent);
+        border-radius: 0 6px 6px 0;
+        padding: 0.85rem 1.1rem;
+        margin: 1.5rem 0;
+        max-width: var(--measure);
+      }
+      .callout .label {
+        display: block;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+      }
+      .callout.edge {
+        background: var(--edge-soft);
+        border-left-color: var(--edge);
+      }
+      .callout.edge .label {
+        color: var(--edge);
+      }
+      /* Skippable deep-background block. */
+      details.skippable {
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        padding: 0.75rem 1.1rem;
+        margin: 1.25rem 0;
+      }
+      details.skippable > summary {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.92rem;
+        color: var(--muted);
+      }
+      details.skippable[open] > summary {
+        margin-bottom: 0.75rem;
+      }
+      /* Diagram family 1: simplified app UI mockup. */
+      .ui-mockup {
+        border: 1px solid var(--border-strong);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 1.5rem 0;
+        max-width: 560px;
+        font-size: 0.85rem;
+      }
+      .ui-mockup .bar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 0.5rem 0.85rem;
+        font-weight: 600;
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+      .ui-mockup .body {
+        padding: 1.1rem 0.85rem;
+        font-family: ui-monospace, monospace;
+        font-size: 0.78rem;
+        white-space: pre-wrap;
+      }
+      .mock-caption {
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin: 0.3rem 0 0;
+        max-width: var(--measure);
+      }
+      /* Diagram family 2: data flow between components, example data on the arrows. */
+      .dataflow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 1.5rem 0;
+      }
+      /* Each arrow travels with the node it points at. Without this, a flow
+         wider than the column wraps between an arrow and its node, leaving the
+         arrow pointing at nothing and the node stranded on the next line. */
+      .dataflow .step {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .dataflow .node {
+        background: var(--accent-soft);
+        border: 1px solid var(--accent);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 0.6rem 0.9rem;
+        font-size: 0.85rem;
+        text-align: center;
+        max-width: 175px;
+      }
+      .dataflow .node.terminal {
+        background: var(--surface);
+        border-color: var(--border);
+      }
+      .dataflow .node.pass {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .dataflow .node.fail {
+        background: var(--bad-soft);
+        border-color: var(--bad);
+      }
+      .dataflow .arrow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.72rem;
+        min-width: 96px;
+      }
+      .dataflow .arrow .line {
+        width: 100%;
+        border-top: 2px solid var(--border);
+        position: relative;
+      }
+      .dataflow .arrow .line::after {
+        content: "\25B6";
+        position: absolute;
+        right: -2px;
+        top: -0.72em;
+        color: var(--border);
+        font-size: 0.7rem;
+      }
+      .dataflow .arrow .data {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 0.05rem 0.35rem;
+        margin-bottom: 0.2rem;
+        font-family: ui-monospace, monospace;
+      }
+      .flow-label {
+        font-size: 0.8rem;
+        color: var(--muted);
+        font-weight: 600;
+        margin: 1.25rem 0 0.25rem;
+      }
+      /* A numbered sequence with one marked position: call stacks, retry
+         counts, any ranked list. Not one of the numbered families; reach for
+         it when a step in an ordered list is the point. */
+      .frames {
+        list-style: none;
+        padding: 0;
+        margin: 1.25rem 0;
+        max-width: 620px;
+        font-family: ui-monospace, monospace;
+        font-size: 0.82rem;
+      }
+      .frames li {
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.45rem 0.7rem;
+        margin: 0.3rem 0;
+        background: var(--surface);
+      }
+      .frames li.target {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .frames .n {
+        display: inline-block;
+        min-width: 2.2em;
+        color: var(--muted);
+      }
+      /* Diagram family 3: node/recursion tree (ASTs, nesting, recursion) */
+      .tree {
+        margin: 1.5rem 0;
+        font:
+          0.82rem/1.5 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Consolas,
+          monospace;
+      }
+      .tnode {
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.3rem 0.55rem;
+        margin: 0.3rem 0;
+        background: var(--surface);
+        display: inline-block;
+      }
+      .tnode.leaf {
+        background: var(--bg);
+      }
+      .tnode.kept {
+        border-color: var(--ok);
+        background: var(--ok-soft);
+      }
+      .tnode.skipped {
+        border-color: var(--muted);
+        color: var(--muted);
+      }
+      .tchildren {
+        margin-left: 1.4rem;
+        border-left: 2px dotted var(--border);
+        padding-left: 0.9rem;
+      }
+      .tnote {
+        color: var(--muted);
+        font-size: 0.75rem;
+        margin-left: 0.4rem;
+      }
+
+      /* Optional tabular body for .ui-mockup, when the mocked UI is a table. */
+      .mock-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.82rem;
+      }
+      .mock-table th,
+      .mock-table td {
+        border: 1px solid var(--border);
+        padding: 0.35rem 0.5rem;
+        text-align: left;
+      }
+      .mock-table th {
+        background: var(--surface);
+        font-weight: 600;
+      }
+      .mock-table .col-highlight {
+        background: var(--accent-soft);
+      }
+
+      .mermaid {
+        margin: 1.75rem 0;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1rem;
+        overflow-x: auto;
+        white-space: pre;
+        font-family: ui-monospace, monospace;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .mermaid .edgeLabel,
+      .mermaid .edgeLabel p,
+      .mermaid .edgeLabel span,
+      .mermaid .edgeLabel foreignObject div {
+        background: var(--surface) !important;
+        color: var(--text) !important;
+      }
+      /* Quiz */
+      .quiz-question {
+        border: 1px solid var(--border-strong);
+        border-radius: 10px;
+        padding: 1.1rem 1.25rem;
+        margin: 1.5rem 0;
+        max-width: var(--measure);
+      }
+      .quiz-question > p.q {
+        font-weight: 600;
+        margin: 0 0 0.85rem;
+      }
+      .quiz-option {
+        display: block;
+        width: 100%;
+        text-align: left;
+        background: var(--bg);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 0.6rem 0.8rem;
+        margin-bottom: 0.5rem;
+        font: inherit;
+        font-size: 0.92rem;
+        cursor: pointer;
+      }
+      .quiz-option:hover:not(:disabled) {
+        border-color: var(--accent);
+      }
+      .quiz-option.correct {
+        background: var(--ok-soft);
+        border-color: var(--ok);
+      }
+      .quiz-option.incorrect {
+        background: var(--bad-soft);
+        border-color: var(--bad);
+      }
+      .quiz-option:disabled {
+        cursor: default;
+      }
+      .quiz-feedback {
+        display: none;
+        font-size: 0.88rem;
+        padding: 0.6rem 0.8rem;
+        border-radius: 7px;
+        margin-top: 0.3rem;
+      }
+      .quiz-feedback.show {
+        display: block;
+      }
+      .quiz-feedback.ok {
+        background: var(--ok-soft);
+      }
+      .quiz-feedback.bad {
+        background: var(--edge-soft);
+      }
+      a:focus-visible,
+      summary:focus-visible,
+      .quiz-option:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
+      }
+      table.vals td.yes::before,
+      .dataflow .node.pass::before,
+      .tnode.kept::before,
+      .quiz-option.correct::before {
+        content: "\2713\00a0";
+        font-weight: 700;
+      }
+      table.vals td.no::before,
+      .dataflow .node.fail::before,
+      .quiz-option.incorrect::before {
+        content: "\2717\00a0";
+        font-weight: 700;
+      }
+      table.vals td.warn::before {
+        content: "\25B2\00a0";
+        font-weight: 700;
+      }
+      .tnode.skipped::before {
+        content: "\2013\00a0";
+        font-weight: 700;
+      }
+      @media (max-width: 800px) {
+        .layout {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 1rem;
+          padding: 1.25rem 1.1rem 4rem;
+        }
+        nav.toc {
+          position: static;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 0.75rem 1rem;
+        }
+        body {
+          font-size: 16px;
+        }
+        main > header h1 {
+          font-size: 1.6rem;
+        }
+        table.vals {
+          display: block;
+          overflow-x: auto;
+          max-width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <nav class="toc">
+        <strong>Contents</strong>
+        <ol>
+          <li><a href="#background">Background</a></li>
+          <li><a href="#intuition">Intuition</a></li>
+          <li><a href="#code">Code walkthrough</a></li>
+          <li><a href="#quiz">Quiz</a></li>
+        </ol>
+      </nav>
+
+      <main>
+        <header>
+          <h1>jsdom v30.1.0: replacing the tree under the DOM</h1>
+          <p class="lead">
+            jsdom stopped storing its document tree in a general-purpose
+            library and wrote one that knows it is holding a DOM, which is why
+            a release whose notes read as a list of small fixes moved 127 files
+            under <code>lib/</code>.
+          </p>
+          <p class="provenance">
+            jsdom/jsdom v30.0.1..v30.1.0 at 556b11fc, explained 2026-09-17
+          </p>
+        </header>
+
+        <section id="background">
+          <h2>Background</h2>
+          <details class="skippable">
+            <summary>
+              New to this area? Expand for the deeper background.
+            </summary>
+            <p>
+              jsdom is a DOM and HTML implementation written in JavaScript. It
+              is what runs when a Node.js test creates a document, queries it,
+              dispatches an event, or reads a computed style, without a browser
+              anywhere.
+            </p>
+            <p>
+              To do that it has to store a tree, and a DOM tree is asked
+              unusual questions. What are this node's children, but also what is
+              its position among its siblings, what is the nearest ancestor two
+              nodes share, and give me a list of children that stays correct as
+              the tree changes underneath it. Those questions sit on the paths a
+              test exercises most: <code>node.appendChild()</code>,
+              <code>range.cloneContents()</code>, and event dispatch walking
+              from target to root.
+            </p>
+            <p>
+              Until v30.1.0 jsdom kept the tree in
+              <code>symbol-tree</code>, a general-purpose npm package for
+              holding a tree in objects you do not own. It is a reasonable
+              choice. It is also a library that has no idea it is storing a
+              document, so it cannot assume anything a DOM guarantees.
+            </p>
+          </details>
+          <p>
+            That last point is where the cost showed up. Four examples, all
+            visible in the v30.0.1 source:
+          </p>
+          <ul>
+            <li>
+              Every node paid for tree bookkeeping at construction.
+              <code>Node-impl.js:120</code> called
+              <code>domSymbolTree.initialize(this)</code> and
+              <code>Node-impl.js:128</code> allocated
+              <code>this._memoizedQueries = {}</code>, for every node, including
+              <code>Attr</code> nodes that inherit from <code>Node</code> and
+              never join a tree.
+            </li>
+            <li>
+              Asking a node its index walked its siblings, so the answer cost
+              time proportional to how far along it sat.
+            </li>
+            <li>
+              Live child collections rebuilt themselves after every mutation,
+              whether or not anything read them. The commit says only that they
+              rebuilt; that appending <code>N</code> children therefore costs
+              time proportional to <code>N</code> squared is my reading of what
+              rebuilding each time implies, not a figure jsdom publishes.
+            </li>
+            <li>
+              Operations that needed an ancestor chain each walked it
+              themselves. <code>compareDocumentPosition</code>, a range's
+              common ancestor, boundary comparison, and
+              <code>range.surroundContents()</code> repeated the same search,
+              and event dispatch re-walked to the document for every connected
+              parent.
+            </li>
+          </ul>
+
+          <div class="callout">
+            <span class="label">Key concept</span>
+            A <em>live</em> collection is one that reflects later changes to the
+            tree. <code>element.children</code> is live: append a child and the
+            collection you are already holding grows. That is what makes it
+            expensive, because something has to decide when the stored answer
+            stopped being true.
+          </div>
+
+          <div class="callout edge">
+            <span class="label">Edge case</span>
+            The change underneath most of this release's performance work has
+            no release-note bullet of its own. jsdom's
+            <code>MAINTAINERS.md:29</code> style guide says to leave out
+            "commits that have no user-facing impact, e.g. test rolls,
+            refactorings, benchmark additions". Replacing the tree is a
+            refactoring, so the notes record its effects under
+            "Improved performance of DOM construction, tree mutations, range
+            operations, and live collection access" and never name the cause.
+            Reading that omission as the style guide working rather than as an
+            oversight is my inference; no maintainer says so about this
+            release.
+          </div>
+        </section>
+
+        <section id="intuition">
+          <h2>Intuition</h2>
+          <p>
+            A general-purpose tree library has to assume the worst. It cannot
+            know that appending a child leaves every existing child's position
+            untouched, because in its world a "tree" is any tree and a caller
+            might do anything. So it recomputes.
+          </p>
+          <p>
+            A tree that knows it is holding a DOM can assume more. jsdom's
+            replacement keeps a small record next to each node, the
+            <code>Links</code> class at
+            <code>dom-tree.js:13</code>, holding the parent, the siblings, the
+            first and last child, a running <code>childCount</code>, and a
+            cached index. The record is not allocated until a node joins a tree
+            or gains children, so an <code>Attr</code> carries one null field
+            instead of a tree structure it will never use.
+          </p>
+          <p>
+            The idea that makes the cache work is that mutations differ in how
+            much they disturb. Take a parent with five children:
+          </p>
+          <ul>
+            <li>
+              Append a sixth. Children 0 to 4 keep their positions, and the new
+              child takes index 5. Nothing needs recomputing, ever.
+            </li>
+            <li>
+              Insert at position 2. Children 0 and 1 are still right; 2 onward
+              are not. The old library would discard the lot. jsdom
+              <em>truncates</em> the cached list at the insertion point and
+              keeps the valid prefix.
+            </li>
+          </ul>
+          <p>
+            Truncating rather than discarding is what lets the cache survive a
+            mutation at all. Dropping the tail also drops the references it held
+            to the removed subtrees, though whether that was a goal or a
+            consequence the code does not say.
+          </p>
+
+          <p class="flow-label">Before, at v30.0.1</p>
+          <div class="dataflow">
+            <div class="node terminal">node.index()</div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">walk back through siblings</span
+                ><span class="line"></span>
+              </div>
+              <div class="node">count them</div>
+            </div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">one step per sibling</span
+                ><span class="line"></span>
+              </div>
+              <div class="node terminal">index</div>
+            </div>
+          </div>
+
+          <p class="flow-label">After, at v30.1.0</p>
+          <div class="dataflow">
+            <div class="node terminal">treeIndex(node)</div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">first or last child?</span
+                ><span class="line"></span>
+              </div>
+              <div class="node pass">answer directly</div>
+            </div>
+            <div class="step">
+              <div class="arrow">
+                <span class="data">otherwise, cachedIndex</span
+                ><span class="line"></span>
+              </div>
+              <div class="node terminal">index</div>
+            </div>
+          </div>
+
+          <p>
+            The tree below shows the state after inserting a new child at
+            position 2. The prefix that survives is kept; the rest is dropped
+            and rebuilt only if something asks for it.
+          </p>
+          <div class="tree">
+            <div class="tnode">parent, childCount 6</div>
+            <div class="tchildren">
+              <div class="tnode leaf kept">
+                child<span class="tnote">index 0, still valid</span>
+              </div>
+              <div class="tnode leaf kept">
+                child<span class="tnote">index 1, still valid</span>
+              </div>
+              <div class="tnode leaf skipped">
+                inserted<span class="tnote">prefix truncated here</span>
+              </div>
+              <div class="tnode leaf skipped">
+                child<span class="tnote">index recomputed on demand</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout edge">
+            <span class="label">Edge case</span>
+            A cached index cannot be trusted on its own, because a node that
+            moved can still be carrying a stale one. So the cache is read
+            through an identity check, at
+            <code>dom-tree.js:271-276</code>:
+            <pre>  const cached = parentData.cachedChildren ||= [];
+  // A shifted node can retain an old index inside the rebuilt prefix. Check
+  // identity as well as the index before using it.
+  if (cached[data.cachedIndex] === node) {
+    return data.cachedIndex;
+  }</pre>
+            Without that comparison the whole scheme would hand back stale
+            positions after any move.
+          </div>
+
+          <!-- Diagram family 4: Mermaid, for a state machine, ER, or sequence (interaction
+           over time). Validate the source with `npx -y @probelabs/maid --strict <file.mmd>`
+           before pasting. The loader at the end of <body> renders it; delete this block
+           if the page has no Mermaid diagram. -->
+          <p>
+            Put together, reading an index now takes one of four paths, and
+            only the last one touches more than a couple of fields.
+          </p>
+          <pre
+            class="mermaid"
+          >flowchart TD
+    A["treeIndex(node)"] --&gt; B{"is it the first child"}
+    B --&gt;|yes| C["return 0"]
+    B --&gt;|no| D{"is it the last child"}
+    D --&gt;|yes| E["return childCount minus 1"]
+    D --&gt;|no| F{"is cachedIndex still trusted"}
+    F --&gt;|yes| G["return cachedIndex"]
+    F --&gt;|no| H["walk children and fill the prefix array"]
+    H --&gt; I["store cachedIndex and return"]
+    classDef fast fill:#e4f3ea,stroke:#1a7f47,color:#16181b
+    classDef slow fill:#fbefe1,stroke:#b5620a,color:#16181b
+    classDef entry fill:#e8eefc,stroke:#3b6cf6,color:#16181b
+    class C,E,G fast
+    class H,I slow
+    class A entry</pre>
+        </section>
+
+        <section id="code">
+          <h2>Code walkthrough</h2>
+          <p>
+            The path: a node is created, joins a tree, the tree indexes it,
+            readers ask for its position or its ancestors, and mutations decide
+            what stays valid. Styles, document lifetime, and the new features
+            hang off that path rather than running down it.
+          </p>
+
+          <h3>1. Creating a node costs nothing now</h3>
+          <p>
+            The old constructor set up tree bookkeeping and a query cache for
+            every node ever built. The new one sets a null.
+          </p>
+          <p class="filename">lib/jsdom/living/nodes/Node-impl.js:170</p>
+          <pre><span class="del">-    domSymbolTree.initialize(this);</span>
+<span class="del">-    this._memoizedQueries = {};</span>
+<span class="add">+    this._links = null;</span></pre>
+          <p>
+            The commit says why in plain terms: "Attributes inherit from Node
+            but usually don't need tree bookkeeping." The same lazy treatment
+            reached event listeners, which start null at
+            <code>EventTarget-impl.js:24</code>, the <code>on*</code> handler
+            storage, the set of ranges pointing into a node, and the
+            mutation-observer list.
+          </p>
+
+          <h3>2. Joining a tree, and why append is the easy case</h3>
+          <p>
+            <code>ensureLinks</code> at
+            <code>dom-tree.js:26</code> allocates the record on first need.
+            Appending then writes one field and increments a counter, with the
+            reasoning stated in a comment rather than left to be worked out.
+          </p>
+          <p class="filename">lib/jsdom/living/helpers/dom-tree.js:299-300</p>
+          <pre>  // Appending preserves every existing child's index.
+  childData.cachedIndex = data.childCount++;</pre>
+
+          <h3>3. Reading an index</h3>
+          <p class="filename">lib/jsdom/living/helpers/dom-tree.js:256-270</p>
+          <pre>function treeIndex(node) {
+  const data = node._links;
+  if (data === null || data.parent === null) {
+    return -1;
+  }
+  const parentData = data.parent._links;
+  if (data.previousSibling === null) {
+    return 0;
+  }
+  if (data.nextSibling === null) {
+    return parentData.childCount - 1;
+  }
+  if (parentData.cachedChildren === null) {
+    return data.cachedIndex;
+  }</pre>
+          <p>
+            Three fields carry the state, and the meaning of
+            <code>cachedChildren</code> is a tri-state the code documents at
+            <code>dom-tree.js:20-22</code>: <code>null</code> means append-time
+            indexes are still valid, <code>undefined</code> means they need
+            rebuilding, and an array is a lazily indexed prefix.
+            <code>cachedIndex</code> uses <code>-1</code> for a node with no
+            parent.
+          </p>
+
+          <div class="callout">
+            <span class="label">Key concept</span>
+            <code>cachedChildren</code> carries three meanings in one field,
+            which is what the code above is branching on.
+            <code>null</code> means every index was assigned at append time and
+            is still correct. <code>undefined</code> means a mutation
+            invalidated them. An array means jsdom has indexed a prefix of the
+            children and has not looked at the rest. None of the three is a
+            tuning knob: there is no size limit and no threshold anywhere in
+            this file.
+          </div>
+
+          <h3>4. Mutating, and invalidating only what moved</h3>
+          <p>
+            <code>insertBefore</code> truncates the cached prefix at the
+            mutation point instead of discarding it, in one line at
+            <code>dom-tree.js:323</code>.
+            <code>_invalidateCaches</code> at
+            <code>Node-impl.js:453</code> replaced a recursive climb up the
+            ancestors with an iterative loop that bumps the version.
+          </p>
+          <p>
+            Live collections now work the other way round. They used to rebuild
+            on every mutation; now they mark themselves stale and refresh on the
+            next read, which they detect with a counter. Each element carries a
+            <code>_version</code> that only ever increases, and a collection
+            refreshes when its own copy has fallen behind. The commit states the
+            problem directly: "Live childNodes and children collections were
+            rebuilding after each mutation even when nothing read them."
+          </p>
+
+          <h3>5. Ancestors, walked once</h3>
+          <p>
+            <code>commonAncestorInfo</code> at
+            <code>dom-tree.js:209</code> returns the shared ancestor together
+            with the two children that lead to each side, and
+            <code>compareTreePosition</code>, a range's common ancestor,
+            boundary comparison, clone, extract, and
+            <code>range.surroundContents()</code> all read that one result.
+            <code>getRootNode</code> at <code>Node-impl.js:356</code> caches the
+            root with path compression, which the commit ties to a specific
+            symptom: "building an event path would previously repeatedly walk
+            the Document for each connected parent."
+          </p>
+
+          <h3>6. Paying for an index only when something wants one</h3>
+          <p class="filename">lib/jsdom/living/nodes/Node-impl.js:1019</p>
+          <pre>        childIndex ??= childImpl._treeIndex();</pre>
+          <p>
+            That sits inside the loop over the ranges whose boundaries point
+            into this node. A <code>Range</code> holds positions in the tree, so
+            it has to be adjusted whenever the tree beneath it changes, which is
+            why insertion consults them at all. A document that never created
+            one skips the index entirely.
+          </p>
+
+          <h3>7. Styles: separating what a value <em>is</em> from how it reads</h3>
+          <p>
+            <code>getComputedStyle()</code> had a cache that did the work twice.
+            A hit cloned the stored declaration by resolving and re-parsing
+            every property, which also lowercased case-sensitive
+            <code>background</code> URLs on the way through.
+            <code>_copyDeclarationsFrom</code> at
+            <code>CSSStyleDeclaration-impl.js:49</code> copies the raw maps
+            instead and leaves resolution lazy.
+          </p>
+          <p>
+            The larger move separates two things CSS itself keeps apart. A
+            property's <em>computed</em> value is what the cascade and
+            inheritance produce. Its <em>resolved</em> value is what a caller
+            reading the property back should see, which is not always the same.
+            <code>_getComputedPropertyValue</code> at
+            <code>CSSStyleDeclaration-impl.js:231</code> memoizes the first,
+            while the second became a display-only layer applied in
+            <code>someStyle.getPropertyValue()</code>. That
+            split is what fixed <code>'border-width'</code>: the keywords are
+            <code>thin</code> 1px, <code>medium</code> 3px and
+            <code>thick</code> 5px, and a border styled
+            <code>none</code> or <code>hidden</code> now resolves to
+            <code>0px</code>. Previously <code>medium</code> went through the
+            font-size path and borderless elements reported <code>16px</code>.
+          </p>
+          <p>
+            Two more in the same area. Setting a shorthand used to write the
+            <code>style=""</code> attribute once per longhand it touched;
+            <code>_updateStyle</code> at
+            <code>CSSStyleDeclaration-impl.js:347</code> defers and writes once,
+            which the commit calls "both a performance and correctness
+            improvement" because the intermediate writes were producing spurious
+            mutation records and custom-element reactions.
+            <code>StyleSheetList-impl.js:28</code> now inserts sheets in tree
+            order rather than insertion order, so adding a
+            <code>&lt;style&gt;</code> before an existing one no longer puts it
+            last in <code>document.styleSheets</code> and in the cascade.
+          </p>
+
+          <h3>8. Documents that are closed but still readable</h3>
+          <p>
+            <code>window.close()</code> used to delete the document and strip
+            its DOM, so retained references went dead while queued work kept
+            running against something unreachable. Destruction is now a flag,
+            and the DOM is left intact. <code>_queueATask</code> at
+            <code>Document-impl.js:643</code> is the new document-scoped queue
+            that discards work after destruction while still settling its
+            promise, so <code>finally</code> cleanup still runs. Timers, frame
+            callbacks, script execution, subresource loads, navigation and
+            <code>someRequest.send()</code> each consult the flag.
+          </p>
+          <p>
+            <code>complete()</code> at <code>Document-impl.js:614</code> fixes a
+            separate hang by splitting internal load completion from the public
+            <code>load</code> event, so an
+            <code>&lt;iframe&gt;</code> that removes itself mid-load no longer
+            leaves its parent waiting forever.
+          </p>
+
+          <h3>9. The three additions</h3>
+          <p>
+            Named access on <code>document</code> went live by uncommenting the
+            IDL getter; the qualifying local names are at
+            <code>Document-impl.js:86</code> and the lookup at
+            <code>Document-impl.js:717</code>, where a single matching
+            <code>&lt;iframe&gt;</code> returns its
+            <code>someFrame.contentWindow</code> rather than the element.
+            <code>QuotaExceededError</code> is a new exception carrying optional
+            <code>quota</code> and <code>requested</code> values, thrown by web
+            storage and by
+            <code>someCrypto.getRandomValues()</code> past
+            <code>65536</code> bytes at <code>Crypto-impl.js:31</code>; the
+            storage limit is <code>5000000</code> code units, defaulted at
+            <code>lib/api.js:263</code>. Relaxed name validation at
+            <code>validate-names.js:7</code> replaces blanket XML productions
+            with the DOM Standard's per-context rules, so
+            <code>document.createElement("a!b")</code> is now accepted where it
+            previously threw.
+          </p>
+
+          <h3>What this page sets aside</h3>
+          <p>
+            This release changed 417 files. 127 are under
+            <code>lib/</code>, and those are the ones this page is about, though
+            it names only nine of them and treats the rest as instances of the
+            same few changes. The biggest such group is the per-property
+            files under <code>lib/jsdom/living/css/properties/</code>: the
+            border, flex and font-weight resolvers are one idea applied once per
+            property, so reading a second of them teaches nothing the first did
+            not.
+          </p>
+          <p>
+            Of the remaining 290 files, 240 are under
+            <code>test/web-platform-tests/</code>. One of those,
+            <code>wpt-manifest.json</code>, is generated and accounts for
+            1,491,149 of the 1,504,358 added lines by itself, which is why a
+            release of this size reports a diff in the millions. Another 25 are
+            benchmarks, which <code>Contributing.md:125</code> asks contributors
+            to run before and after a change. The last 25 are workflow files,
+            lint configuration, and documentation, including a policy on
+            AI-assisted contribution added in this same range. None of those are
+            explained here.
+          </p>
+          <p>
+            One set-aside is worth more than a passing mention. Four
+            release-note bullets describe selector fixes, including the
+            <code>someElement.querySelectorAll()</code> regression introduced in
+            v30.0.0. No jsdom selector code changed. jsdom delegates matching to
+            <code>@asamuzakjp/dom-selector</code> through one method at
+            <code>Document-impl.js:274</code>, and the fixes arrived as a
+            version bump from <code>^8.3.0</code> at v30.0.1 to
+            <code>^9.1.2</code> at v30.1.0. The commit body for the first bump
+            reads, in full, "Fixes #4227." The mechanism lives in the
+            dependency, and this page cannot show it to you.
+          </p>
+
+          <div class="callout edge">
+            <span class="label">Edge case</span>
+            The v30.0.0 regression looks like it came from the same place it was
+            fixed. That release took the same dependency from
+            <code>^7.1.1</code> to <code>^8.2.5</code>, a major jump with no
+            per-fix notes. That is my inference from the version history, not
+            something the repository states: no commit, issue or comment in this
+            range names what in 8.x broke context-element matching.
+          </div>
+        </section>
+
+        <section id="quiz">
+          <h2>Quiz</h2>
+          <div class="quiz-question">
+            <p class="q">
+              jsdom replaced a general-purpose tree library with one written for
+              the DOM. In which situation would the general-purpose library have
+              stayed the better choice?
+            </p>
+            <button class="quiz-option">
+              When the tree grows large enough that index lookups dominate.
+            </button>
+            <button class="quiz-option" data-correct>
+              When the code cannot predict which mutations callers will make.
+            </button>
+            <button class="quiz-option">
+              When most nodes never join a tree and allocation dominates.
+            </button>
+            <div class="quiz-feedback" role="status">
+              The caching is licensed by knowing what a DOM guarantees, above
+              all that appending leaves earlier positions untouched. Strip that
+              knowledge away and recomputing is the correct conservative
+              choice, which is what the general-purpose library was doing. The
+              other two describe conditions that argue <em>for</em> the
+              DOM-specific tree, not against it: heavy index lookups are what
+              the cache exists to serve, and unused nodes are what the lazy
+              <code>Links</code> record exists to make free.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              Before trusting <code>cachedIndex</code>, the code checks that the
+              child sitting at that position really is this node. What goes
+              wrong if that check is removed?
+            </p>
+            <button class="quiz-option">
+              Appending a child would give the new node a duplicate index.
+            </button>
+            <button class="quiz-option">
+              A detached node would report 0 from <code>treeIndex</code>
+              instead of -1.
+            </button>
+            <button class="quiz-option" data-correct>
+              A moved node could report the position it used to hold.
+            </button>
+            <div class="quiz-feedback" role="status">
+              The cached value travels with the node, so a node shifted within
+              its parent still carries the old number. The identity check is
+              what catches that. Appending is safe without the check because it
+              assigns from <code>childCount</code>, and the detached case is
+              handled earlier by the null-parent test that returns -1.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              A document has no live ranges attached to it. Because of that,
+              what does <code>_insert</code> avoid doing?
+            </p>
+            <button class="quiz-option" data-correct>
+              Computing the tree index of each child it inserts.
+            </button>
+            <button class="quiz-option">
+              Running the insertion steps on each shadow-including descendant.
+            </button>
+            <button class="quiz-option">
+              Marking live child collections stale for a later refresh.
+            </button>
+            <div class="quiz-feedback" role="status">
+              The index is computed with <code>??=</code> inside the loop over
+              live ranges, so with no ranges the loop never runs and the index
+              is never needed. The other two happen on every insertion
+              regardless: insertion steps are how elements learn they are
+              connected, and collection invalidation is what keeps a live
+              collection live.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              Batching the <code>style=""</code> attribute write is described as
+              a correctness improvement, not only a faster one. Which observable
+              behavior was wrong before?
+            </p>
+            <button class="quiz-option">
+              Computed values resolved before redundant longhands were removed.
+            </button>
+            <button class="quiz-option">
+              Border widths resolved through the font-size path, reporting 16px.
+            </button>
+            <button class="quiz-option" data-correct>
+              Every longhand touched produced its own mutation record.
+            </button>
+            <div class="quiz-feedback" role="status">
+              Setting one shorthand wrote the attribute once per longhand it
+              expanded to, and anything watching the element saw each
+              intermediate write as a real change, including custom-element
+              reactions. Batching makes one write. The other two are genuine
+              defects fixed in this release, but they belong to serialization
+              order and to the computed-versus-resolved split rather than to
+              attribute writes.
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="q">
+              The cached prefix is truncated at the point of a mutation rather
+              than thrown away. Which principle does that illustrate?
+            </p>
+            <button class="quiz-option">
+              Prefer lazy evaluation, so that no work happens before a reader
+              asks.
+            </button>
+            <button class="quiz-option" data-correct>
+              Keep the part of a cache that a mutation cannot have invalidated.
+            </button>
+            <button class="quiz-option">
+              Store derived data beside its source so the two change together.
+            </button>
+            <div class="quiz-feedback" role="status">
+              An insertion at position 2 cannot affect positions 0 and 1, so
+              discarding them throws away work that is still correct. Laziness
+              is also present here, in how the prefix is filled on demand, but
+              it does not explain why the surviving entries are kept. Locality
+              of storage describes where the record lives, not what survives a
+              write.
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="colophon">
+        Generated with
+        <a href="https://github.com/malav2110/explain-diff-html"
+          >explain-diff-html</a
+        >
+      </footer>
+    </div>
+
+    <script>
+      document.querySelectorAll(".quiz-question").forEach(function (question) {
+        var feedback = question.querySelector(".quiz-feedback");
+
+        // Shuffle the options on every load, so the correct answer's position is
+        // random and a reader cannot fall into answering by position. Each option
+        // is re-inserted before the feedback block, which has to stay last.
+        var shuffled = Array.prototype.slice.call(
+          question.querySelectorAll(".quiz-option"),
+        );
+        for (var i = shuffled.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var swap = shuffled[i];
+          shuffled[i] = shuffled[j];
+          shuffled[j] = swap;
+        }
+        shuffled.forEach(function (option) {
+          question.insertBefore(option, feedback);
+        });
+
+        var options = question.querySelectorAll(".quiz-option");
+        options.forEach(function (option) {
+          option.addEventListener("click", function () {
+            var isCorrect = option.hasAttribute("data-correct");
+            options.forEach(function (other) {
+              other.disabled = true;
+              if (other.hasAttribute("data-correct"))
+                other.classList.add("correct");
+            });
+            if (!isCorrect) option.classList.add("incorrect");
+            feedback.classList.add("show", isCorrect ? "ok" : "bad");
+            feedback.insertBefore(
+              document.createTextNode(isCorrect ? "Correct. " : "Not quite. "),
+              feedback.firstChild,
+            );
+          });
+        });
+      });
+    </script>
+    <script>
+      // Mermaid loads without blocking: the page scripts above run first, and a slow
+      // or blocked CDN never holds up the quiz or the rest of the page. This is the
+      // only permitted external request, and it fires only when a .mermaid block is
+      // present. Leave it in place; it is a no-op on pages without a diagram.
+      (function () {
+        var blocks = document.querySelectorAll(".mermaid");
+        if (!blocks.length) return;
+
+        // mermaid.run() replaces each block's text with an SVG, so the source is
+        // gone after the first render. Stash it, because a theme change has to
+        // parse it again.
+        blocks.forEach(function (block) {
+          block.dataset.source = block.textContent;
+        });
+
+        var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+        function render() {
+          blocks.forEach(function (block) {
+            block.removeAttribute("data-processed");
+            block.textContent = block.dataset.source;
+          });
+          try {
+            window.mermaid.initialize({
+              startOnLoad: false,
+              theme: darkQuery.matches ? "dark" : "default",
+            });
+          } catch (e) {}
+          Promise.resolve(window.mermaid.run({ nodes: blocks })).catch(
+            function () {},
+          );
+        }
+
+        var s = document.createElement("script");
+        s.src =
+          "https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js";
+        s.integrity =
+          "sha384-T/0lMUdJpd2S1ZHtRiofG3htU3xPCrFVeAQ1UUE2TJwlEJSV5NUwn30kP28n238E";
+        s.crossOrigin = "anonymous";
+        s.onload = function () {
+          render();
+          // Re-render when the reader switches system theme, so the diagram does
+          // not stay light on a dark page.
+          if (darkQuery.addEventListener)
+            darkQuery.addEventListener("change", render);
+        };
+        document.head.appendChild(s);
+      })();
+    </script>
+  </body>
+</html>

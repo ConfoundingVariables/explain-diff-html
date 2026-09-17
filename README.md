@@ -149,15 +149,18 @@ to the fix, so the reader sees where the bug lived and why the patch closes it.
 
 ## Samples
 
-Eight samples across three languages, each explaining a merged pull request in
-a public repository.
+Nine samples across four languages, all from public repositories. Eight explain
+one merged pull request. The ninth explains a whole release, 94 commits across
+417 files, to show what the skill does when the target is bigger than a single
+change.
 
 The Page links go to the rendered pages on GitHub Pages. Opening the same files
 from the `samples/` directory in this repository shows their HTML source
 instead, because GitHub serves `.html` as code rather than rendering it.
 
-| Page                                                                                                                  | Repository                 | Pull request                                                 | What it teaches                                                                                                          |
+| Page                                                                                                                  | Repository                 | Source                                                       | What it teaches                                                                                                          |
 | --------------------------------------------------------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| [v30.1.0](https://malav2110.github.io/explain-diff-html/samples/jsdom/2026-09-17-v30-1-0-explanation.html)            | jsdom/jsdom, JavaScript    | [v30.1.0](https://github.com/jsdom/jsdom/releases/tag/v30.1.0) | Why a release of small fixes moved 127 files, and the style guide that keeps the cause out of the release notes         |
 | [PR 11305](https://malav2110.github.io/explain-diff-html/samples/tanstack-query/2026-09-01-pr-11305-explanation.html) | TanStack/query, TypeScript | [11305](https://github.com/TanStack/query/pull/11305)        | A `?.field` guard answering two questions at once, so falsy errors never reached the error boundary                      |
 | [PR 11242](https://malav2110.github.io/explain-diff-html/samples/tanstack-query/2026-09-01-pr-11242-explanation.html) | TanStack/query, TypeScript | [11242](https://github.com/TanStack/query/pull/11242)        | A guard that reset only on the happy path, and why the fix uses `finally` with no `catch`                                |
 | [PR 16102](https://malav2110.github.io/explain-diff-html/samples/fastapi/2026-09-01-pr-16102-explanation.html)        | fastapi/fastapi, Python    | [16102](https://github.com/fastapi/fastapi/pull/16102)       | A three-valued option collapsed at the public boundary, and the stack depth a warning depends on                         |
@@ -168,9 +171,9 @@ instead, because GitHub serves `.html` as code rather than rendering it.
 | [PR 2983](https://malav2110.github.io/explain-diff-html/samples/uportal/2026-09-01-pr-2983-explanation.html)          | uPortal, Java              | [2983](https://github.com/uPortal-Project/uPortal/pull/2983) | An implicit path attribute made explicit, moving resolution from the server to the browser                               |
 
 Each page has been through two checks: a read-only pass that re-opens every
-cited `file:line` at the pull request head and tries to falsify each claim, and
-a cold read of the prose against the writing rules in `SKILL.md`, the file that
-defines the skill.
+cited `file:line` at the target ref and tries to falsify each claim, and a cold
+read of the prose against the writing rules in `SKILL.md`, the file that defines
+the skill.
 
 ## Requirements
 
