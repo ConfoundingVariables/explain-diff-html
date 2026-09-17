@@ -24,7 +24,7 @@ stem rather than in near-identical options. That skill is CC-BY-4.0.
 
 ## Why this exists
 
-<details>
+<details markdown="1">
 <summary>Bigger PRs, and why Git's file order hides how they work.</summary>
 
 AI is helping us write code faster than ever.
@@ -125,7 +125,7 @@ Limitations below sets out what it deliberately does not do.
 
 ## Where it helps
 
-<details>
+<details markdown="1">
 <summary>Onboarding, machine-written changes, and post-mortems.</summary>
 
 The main use is reading a pull request before you review it. Three others come
@@ -174,7 +174,7 @@ defines the skill.
 
 ## Requirements
 
-<details>
+<details markdown="1">
 <summary>git, gh, and node, plus what runs on which platform.</summary>
 
 | Tool   | Needed when                              | Used for                                               |
@@ -264,7 +264,7 @@ a motive.
 
 ## How it works
 
-<details>
+<details markdown="1">
 <summary>The eight steps, and two checks that exist because of bugs.</summary>
 
 `SKILL.md` drives Claude Code through eight steps. In outline:
@@ -294,7 +294,7 @@ nothing.
 
 ## Customizing
 
-<details>
+<details markdown="1">
 <summary>Colors, diagram families, and the pinned Mermaid version.</summary>
 
 Everything visual lives in `html-template.html`, which the skill fills in rather
