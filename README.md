@@ -1,7 +1,10 @@
 # Explain Diff (HTML)
 
-A Claude Code skill that turns a code change into one self-contained HTML page
-that teaches a reader what changed and why.
+An agent skill that turns a code change into one self-contained HTML page that
+teaches a reader what changed and why. It runs in Claude Code, Codex, Cursor,
+and every other agent the `skills` installer reaches.
+
+[![skills.sh](https://skills.sh/b/malav2110/explain-diff-html?style=for-the-badge)](https://skills.sh/malav2110/explain-diff-html)
 
 ![Three steps. Start with any pull request or diff. Run the skill in Claude
 Code, which reads the diff, finds related code and callers, and takes in commits
@@ -21,6 +24,10 @@ This version also adapts work from Cat Hicks'
 [learning-opportunities skill](https://github.com/DrCatHicks/learning-opportunities):
 three of the quiz question shapes, and the rule that difficulty belongs in the
 stem rather than in near-identical options. That skill is CC-BY-4.0.
+
+It was written as a Claude Code skill, and `SKILL.md` keeps that format. Other
+agents read the same format now, so `npx skills add` installs it elsewhere
+without changing the file.
 
 ## Why this exists
 
@@ -99,7 +106,7 @@ learning opportunity again.
 ## What it produces
 
 Point it at a pull request, a branch, or a commit range. It reads the diff, then
-reads the code around the diff, then writes a single page with four sections:
+the code around it, and writes a single page with four sections:
 
 - Background, on the system the change lands in, with the beginner-level part
   collapsed so a familiar reader can skip it.
@@ -112,16 +119,14 @@ reads the code around the diff, then writes a single page with four sections:
 
 The output is one HTML file with the CSS and JavaScript inline. It opens with a
 double click, reads on a phone, and follows the reader's light or dark system
-theme. Nothing needs a server, a build step, or a network round trip, with one
-exception.
+theme. Nothing needs a server, a build step, or a network round trip, apart from
+Mermaid.
 
-That exception is Mermaid, the diagramming library these pages use for state,
+Mermaid is the diagramming library these pages use for state,
 entity-relationship, sequence, and flow diagrams. A page carrying one of those
 loads Mermaid from a CDN, so it needs network for those diagrams to draw.
 Everything else on the page, including the hand-built diagrams and the quiz,
 works offline.
-
-Limitations below sets out what it deliberately does not do.
 
 ## Where it helps
 
@@ -154,8 +159,8 @@ one merged pull request. The ninth explains a whole release, 94 commits across
 417 files, to show what the skill does when the target is bigger than a single
 change.
 
-The Page links go to the rendered pages on GitHub Pages. Opening the same files
-from the `samples/` directory in this repository shows their HTML source
+The first column links to the rendered pages on GitHub Pages. Opening the same
+files from the `samples/` directory in this repository shows their HTML source
 instead, because GitHub serves `.html` as code rather than rendering it.
 
 | Page                                                                                                                  | Repository                 | Source                                                       | What it teaches                                                                                                          |
@@ -170,10 +175,9 @@ instead, because GitHub serves `.html` as code rather than rendering it.
 | [PR 2945](https://malav2110.github.io/explain-diff-html/samples/uportal/2026-09-01-pr-2945-explanation.html)          | uPortal, Java              | [2945](https://github.com/uPortal-Project/uPortal/pull/2945) | Picking the type that matches the intent, so a static-analysis suppression stops being needed                            |
 | [PR 2983](https://malav2110.github.io/explain-diff-html/samples/uportal/2026-09-01-pr-2983-explanation.html)          | uPortal, Java              | [2983](https://github.com/uPortal-Project/uPortal/pull/2983) | An implicit path attribute made explicit, moving resolution from the server to the browser                               |
 
-Each page has been through two checks: a read-only pass that re-opens every
-cited `file:line` at the target ref and tries to falsify each claim, and a cold
-read of the prose against the writing rules in `SKILL.md`, the file that defines
-the skill.
+Every page went through two checks. A read-only pass re-opens each cited
+`file:line` at the target ref and tries to falsify the claim. A cold read then
+tests the prose against the writing rules in `SKILL.md`.
 
 ## Requirements
 
@@ -201,28 +205,56 @@ in any browser on any platform.
 
 ## Install
 
-The repository root is the skill, so cloning it into place is the whole install.
+One command, run from the project you want it in:
+
+```bash
+npx skills add malav2110/explain-diff-html
+```
+
+That installs it for that project alone. Add `-g` to install it once for every
+project instead.
+
+The installer is [skills](https://github.com/vercel-labs/skills), which reads
+`skills/explain-diff-html/SKILL.md`. It copies that one directory, 64 KB, and
+leaves the samples and images in this repository where they belong. It reaches
+79 agents, among them Claude Code, Codex, Cursor, Gemini CLI, GitHub Copilot,
+Windsurf, Zed, opencode, and Goose. It installs to the agents it detects, or to
+ones you name:
+
+```bash
+npx skills add malav2110/explain-diff-html -a codex
+```
+
+Then `npx skills list` shows what is installed, `npx skills update` moves it to
+a newer version, and `npx skills remove` takes it out again.
+
+### Installing by hand
+
+The skill is the `skills/explain-diff-html` directory, so copying that one
+directory into place works too, and needs no Node.
 
 For every project you work on:
 
 ```bash
-git clone https://github.com/malav2110/explain-diff-html.git \
-  ~/.claude/skills/explain-diff-html
+git clone https://github.com/malav2110/explain-diff-html.git /tmp/edh
+cp -R /tmp/edh/skills/explain-diff-html ~/.claude/skills/
 ```
 
 For one project only, committed alongside the code so your team gets it too:
 
 ```bash
-git clone https://github.com/malav2110/explain-diff-html.git \
-  <your-repo>/.claude/skills/explain-diff-html
+git clone https://github.com/malav2110/explain-diff-html.git /tmp/edh
+cp -R /tmp/edh/skills/explain-diff-html <your-repo>/.claude/skills/
 ```
 
-Claude Code reads `SKILL.md`. The `README.md` and `samples/` directory sit in
-the same folder and are ignored, so nothing needs moving or deleting.
+Those two paths are Claude Code's. Other agents read skills from their own
+directories. `npx skills add` finds the right one for you.
 
-Confirm the install by asking Claude Code to list its skills, or by running
-`/skill-doctor` if your version has it. `explain-diff-html` should appear with
-its description.
+The agent reads `SKILL.md` and, when it builds a page, `html-template.html`
+beside it. Those two files are the whole skill.
+
+Confirm the install with `npx skills list`, or by asking your agent to list its
+skills. `explain-diff-html` should appear with its description.
 
 ## Use
 
@@ -260,7 +292,7 @@ the skill. It is a snapshot of one diff at one ref. If the author pushes three m
 commits afterwards, the page still describes what it read, and nothing in it
 updates. Generate a new page rather than trusting an old one.
 
-One more thing to know: it explains what the record supports. Where the
+It explains what the record supports. Where the
 reasoning behind a change is not in the diff, the commits, the pull request
 body, or the repository's own documents, the page says so rather than inventing
 a motive.
@@ -270,23 +302,23 @@ a motive.
 <details markdown="1">
 <summary>The eight steps, and two checks that exist because of bugs.</summary>
 
-`SKILL.md` drives Claude Code through eight steps. In outline:
+`SKILL.md` drives the agent through eight steps. In outline:
 
 1. Resolve the target and the filename key, detecting the repository's default
    branch rather than assuming `main`.
 2. Gather context: the code around the diff, the pull request body, the commit
    messages, and any design records the repository keeps.
 3. Draft the four sections, walking the code in flow order.
-4. Build the diagrams, from three dependency-free HTML and CSS families plus
-   Mermaid for state, entity-relationship, and sequence shapes.
+4. Build the diagrams, from three families of plain HTML and CSS, plus Mermaid
+   for state, entity-relationship, and sequence.
 5. Write the quiz to the question shapes that test transfer rather than recall.
 6. Hand the prose to a fresh reader for an editing pass, because an author
-   misses its own tells.
+   misses their own tells.
 7. Run the self-check, including re-reading every cited `file:line` at the
    target ref.
 8. Write the file.
 
-Step 7 carries two checks that exist because of specific failures. It confirms
+Step 7 carries two checks that exist because of past failures. It confirms
 every code block is HTML-escaped, because a single raw `<` in a pasted diff line
 opens an element HTML never closes, which swallows the rest of the document and
 breaks every anchor below it. It also re-reads each cited line at the target
@@ -300,8 +332,8 @@ nothing.
 <details markdown="1">
 <summary>Colors, diagram families, and the pinned Mermaid version.</summary>
 
-Everything visual lives in `html-template.html`, which the skill fills in rather
-than rebuilding per run:
+Everything visual lives in `skills/explain-diff-html/html-template.html`, which
+the skill fills in rather than rebuilding per run:
 
 - Colors are CSS custom properties at the top, in a light set and a dark set.
   Change the two blocks to match your own palette.
@@ -311,7 +343,7 @@ than rebuilding per run:
 - The Mermaid loader pins an exact version and checks it with a Subresource
   Integrity hash. To change versions, edit the `@x.y.z` in the `src` and
   recompute the hash. `SKILL.md` carries the command. A stale hash makes the
-  browser block the script and the diagrams then fail silently.
+  browser block the script, and the diagrams then fail silently.
 - The output directory and the filename pattern are in `SKILL.md`, under the
   output contract.
 - Every page ends with a credit line: "Generated with explain-diff-html",
