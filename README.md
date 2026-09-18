@@ -215,11 +215,10 @@ That installs it for that project alone. Add `-g` to install it once for every
 project instead.
 
 The installer is [skills](https://github.com/vercel-labs/skills), which reads
-`skills/explain-diff-html/SKILL.md`. It copies that one directory, 64 KB, and
-leaves the samples and images in this repository where they belong. It reaches
-79 agents, among them Claude Code, Codex, Cursor, Gemini CLI, GitHub Copilot,
-Windsurf, Zed, opencode, and Goose. It installs to the agents it detects, or to
-ones you name:
+`skills/explain-diff-html/SKILL.md`. It copies that directory and nothing else,
+so the samples and images stay in this repository. It reaches 79 agents, among
+them Claude Code, Codex, Cursor, Gemini CLI, GitHub Copilot, Windsurf, Zed,
+opencode, and Goose. It installs to the agents it detects, or to ones you name:
 
 ```bash
 npx skills add malav2110/explain-diff-html -a codex
