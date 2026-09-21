@@ -30,6 +30,12 @@ learning-opportunities skill by Cat Hicks, used under CC-BY-4.0:
 Check each tool before you rely on it, and name the missing one rather than
 failing part way through a run.
 
+What to do about a missing tool or capability depends on what breaks without
+it. Stop when the work cannot happen at all, or when the finished page would
+carry a defect nobody can see by reading it: an unvalidated Mermaid source
+fails silently in the browser, so a reader never learns a diagram is missing.
+Continue when the work still happens another way, and say what was weaker.
+
 | Tool   | Needed when                              | Used for                                               |
 | ------ | ---------------------------------------- | ------------------------------------------------------ |
 | `git`  | Every run                                | Resolving the base, fetching the ref, reading the diff |
@@ -67,7 +73,8 @@ Three details this table hides:
 
 - `gh` must be authenticated, not merely installed. `gh auth status` is the
   check. Without `gh` the skill still explains a branch or a commit range; it
-  cannot reach a pull request body, which is usually where the why lives.
+  cannot reach a pull request body, which is usually where the why lives. Say
+  on the page that the body was not read.
 - `node` is a build-time validator only. The reader's browser loads Mermaid from
   the CDN, so nobody needs Node to open the finished page.
 - `npx -y` downloads the pinned validator on first use and caches it, so the
