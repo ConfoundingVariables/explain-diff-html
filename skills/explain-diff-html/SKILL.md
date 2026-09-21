@@ -30,6 +30,12 @@ learning-opportunities skill by Cat Hicks, used under CC-BY-4.0:
 Check each tool before you rely on it, and name the missing one rather than
 failing part way through a run.
 
+What to do about a missing tool or capability depends on what breaks without
+it. Stop when the work cannot happen at all, or when the finished page would
+carry a defect nobody can see by reading it: an unvalidated Mermaid source
+fails silently in the browser, so a reader never learns a diagram is missing.
+Continue when the work still happens another way, and say what was weaker.
+
 | Tool   | Needed when                              | Used for                                               |
 | ------ | ---------------------------------------- | ------------------------------------------------------ |
 | `git`  | Every run                                | Resolving the base, fetching the ref, reading the diff |
@@ -67,7 +73,8 @@ Three details this table hides:
 
 - `gh` must be authenticated, not merely installed. `gh auth status` is the
   check. Without `gh` the skill still explains a branch or a commit range; it
-  cannot reach a pull request body, which is usually where the why lives.
+  cannot reach a pull request body, which is usually where the why lives. Say
+  on the page that the body was not read.
 - `node` is a build-time validator only. The reader's browser loads Mermaid from
   the CDN, so nobody needs Node to open the finished page.
 - `npx -y` downloads the pinned validator on first use and caches it, so the
@@ -211,7 +218,7 @@ Write in the order below. Aim for concrete, engaging, classic prose, with
 smooth transitions so the page reads as one piece rather than four.
 
 Three rules bind all four sections. They are authoring rules, not review
-notes: the humanize sub-agent in step 6 catches violations, but by then the
+notes: the humanize pass in step 6 catches violations, but by then the
 prose is already built around them.
 
 Mark every inference as yours. Explaining why code is shaped a certain way is
@@ -491,6 +498,11 @@ anchored to the passages they concern, then apply the findings in the main
 thread. The cold read is the point: the sub-agent has not written the sentences
 and so does not read its own intent into them.
 
+When your tools include no way to dispatch a sub-agent, run the pass inline
+against the catalogue, and say which pass ran when you report the finished
+page. An inline pass is weaker, because the author is reading their own
+sentences. Nothing on the page says which one ran.
+
 The catalogue, trimmed to the tells that actually show up in a technical
 explanation:
 
@@ -542,6 +554,22 @@ failures the catalogue misses:
   ask the reader to take the central claim on trust until a later section?
 
 ### 7. Self-check before saving
+
+Start with the anchors and the code claims. Dispatch a read-only sub-agent that
+re-reads each cited `path:line` at the target ref, checks that what the page
+says about that code still holds, and reports mismatches, then fix them before
+saving. A wrong anchor and a wrong claim both survive every check below. The
+path exists, the line number is a number, and the sentence reads as if someone
+looked. Only re-reading the file at the ref catches either one.
+
+When your tools include no way to dispatch a sub-agent, do both checks
+yourself. Re-reading a line at a ref is mechanical, so the anchor check loses
+nothing inline. Judging whether a claim still holds is not mechanical, so that
+half is weaker. Read the code first and your own sentence about it second, and
+say that the claim check ran inline when you report the finished page. The
+sub-agent is there to keep whole files out of the main context.
+
+The rest of the step is yours to run:
 
 - Every code block is a `<pre>`, or a styled element whose CSS sets
   `white-space: pre` or `white-space: pre-wrap`. Scan each block in the HTML
@@ -612,11 +640,6 @@ failures the catalogue misses:
   Then grep the page for every number it states and confirm each against the
   command that produced it. A count is the easiest claim to get wrong and the
   easiest for a reader to check, and no other check on this list can catch it.
-
-- Every `file:line` anchor and code claim is verified at the target ref.
-  Dispatch a read-only sub-agent that re-reads each cited `path:line` at the
-  pull request head and reports mismatches, then fix them before saving. The
-  mechanical checks above cannot catch a stale ref.
 
 ### 8. Write the file
 
