@@ -4,10 +4,9 @@ description: >-
   Produce a rich, interactive, self-contained HTML explanation of a diff,
   branch, or pull request, with Background, Intuition, Code walkthrough, and a
   Quiz, written as one dated file to a code-explanations folder in the user's
-  home directory, outside the repo.
-  Triggers on "explain this diff", "walk me through this branch", "explain PR
-  1234". Not for reviewing changes and not for explaining a standalone issue
-  ticket.
+  home directory, outside the repo. Not for reviewing changes and not for
+  explaining a standalone issue ticket.
+disable-model-invocation: true
 ---
 
 # Explain Diff (HTML)
@@ -41,11 +40,12 @@ Continue when the work still happens another way, and say what was weaker.
 | `git`  | Every run                                | Resolving the base, fetching the ref, reading the diff |
 | `gh`   | Explaining a pull request                | Fetching the pull request title, body, and URL         |
 | `node` | Every run that carries a Mermaid diagram | Validating Mermaid sources in step 4, through `npx`    |
+| `python` | Every run                              | Rendering the finished page from the spec (`render.py`) |
 
 Verify them up front:
 
 ```bash
-command -v git node || echo "install the missing tool before continuing"
+command -v git node python || echo "install the missing tool before continuing"
 command -v gh && gh auth status   # pull request targets only
 ```
 
@@ -69,7 +69,7 @@ platform: `/home/you` on Linux, `/Users/you` on macOS, `/home/you` inside WSL,
 and your Windows user profile under Git Bash. Write to `"$HOME/code-explanations"`
 rather than a hardcoded path, and never assume a leading `/Users` or `/home`.
 
-Three details this table hides:
+Four details this table hides:
 
 - `gh` must be authenticated, not merely installed. `gh auth status` is the
   check. Without `gh` the skill still explains a branch or a commit range; it
@@ -81,6 +81,7 @@ Three details this table hides:
   first Mermaid run reaches the npm registry. On a machine without registry
   access, install `@probelabs/maid@0.0.29` ahead of time or expect that first
   run to fail.
+- `python` needs nothing beyond the standard library, Python 3.8 or newer.
 
 Mermaid is part of the output, not an optional extra. A state machine, an entity
 relationship, an interaction over time, or a branching or nested structure reads
@@ -99,11 +100,15 @@ therefore no Node. The hand-built families cover it.
 - One self-contained HTML file. All CSS and JavaScript inline. Hand-built
   HTML/CSS diagrams need no network. The only permitted external request is the
   Mermaid library from a CDN, and only when a structural diagram is present.
+- Built by `render.py`, beside this file, from a JSON spec holding only the
+  content. The renderer writes the scaffold rather than the run rebuilding it,
+  so the page structure cannot drift between runs.
 - One long page with section headers and a table of contents. Do not use tabs
   for the top-level structure.
 - Responsive enough to read on a phone.
-- A provenance line under the lead, in the `.provenance` paragraph the template
-  carries: the source, the exact ref, and the date the page was written, as in
+- A provenance line under the lead, in the `.provenance` paragraph the
+  renderer writes: the source, the exact ref, and the date the page was
+  written, as in
   `owner/repo PR 1234 at abc1234, explained 2026-09-01`. Use the short form of
   the same commit every `file:line` anchor was resolved against, not the branch
   name and not the base. For a branch or a commit range, name that instead of a
@@ -299,13 +304,13 @@ judgment and transfer, not recall. See Quiz design below.
 ### 4. Diagrams
 
 Pick a small number of diagram families and reuse them across the page. Do not
-use ASCII diagrams; build them in HTML and CSS. The template carries three:
+use ASCII diagrams; build them in HTML and CSS. The page scaffold carries three:
 
 - A simplified version of the app UI, to explain what the user sees change.
   Skip it for a change with no user-visible surface.
 - A system diagram showing data flow between components. Always include example
   data on the arrows. Wrap every node after the first with its incoming arrow in
-  a `.step`, as the template shows. The row wraps between steps, so a flow
+  a `.step`. The row wraps between steps, so a flow
   longer than the column stays readable instead of leaving an arrow pointing at
   nothing. How many nodes fit one line depends on how long their labels are, not
   on the count, so expect wrapping and keep the labels to a few words. The
@@ -346,7 +351,7 @@ npx -y @probelabs/maid@0.0.29 --strict <file.mmd>
 The version is pinned on purpose. `npx -y` installs without prompting, so an
 unpinned name runs whatever npm resolves as latest at that moment, on the
 developer's machine, with no lockfile and no integrity check. The Mermaid CDN
-load in the template is pinned the same way and for the same reason. To move
+load the renderer writes is pinned the same way and for the same reason. To move
 versions, change the number here after checking the release, the way you would
 for the CDN below.
 
@@ -365,9 +370,10 @@ All four are quick to hit and quick to fix, which is the reason to validate
 before pasting rather than after.
 
 The `.mermaid` container style and a non-blocking loader already ship in the
-template, so a pasted block renders with no extra wiring. The loader pins an
-exact Mermaid version and checks it with a Subresource Integrity hash. To move
-versions, change the `@x.y.z` in the `src` and recompute the hash:
+page the renderer writes, so a pasted block renders with no extra wiring. The
+loader pins an exact Mermaid version and checks it with a Subresource
+Integrity hash. To move versions, change the `@x.y.z` in the `src` and
+recompute the hash:
 
 ```bash
 curl -s <url> | openssl dgst -sha384 -binary | openssl base64 -A
@@ -385,7 +391,7 @@ Mermaid parses `textContent`, so arrows such as `-->` survive and an escaped
 `<br/>` renders as a line break.
 
 Color Mermaid nodes only when color carries meaning, and take the colors from
-the template's own tokens so the diagrams match the page:
+the page's own tokens so the diagrams match the page:
 
 | Role                        | Fill      | Stroke    |
 | --------------------------- | --------- | --------- |
@@ -406,7 +412,7 @@ Use the neutral fill as the default and add at most three of the
 meaning-carrying roles to one diagram; past that, the colors stop
 distinguishing anything.
 
-The `color:` is not optional. The template's loader switches Mermaid to its
+The `color:` is not optional. The page's loader switches Mermaid to its
 dark theme when the reader's system is dark, and that theme paints node labels
 a light grey. The fills above stay light regardless, because `classDef` writes
 them with `!important`. A label left to the theme therefore lands at about
@@ -467,7 +473,7 @@ Seven rules bind every question, whichever shape it takes:
   makes every option unreadable. It is to cut the reasoning out of the correct
   option and put it in the feedback block, which is where the reasoning belongs,
   leaving each option as a bare claim.
-- Vary where the correct option sits in the source. The template's script
+- Vary where the correct option sits in the source. The page script
   shuffles the options on every page load, so position is random for the reader
   either way. Vary it anyway: write each question with its correct answer first,
   because that is how the reasoning comes out, then move it to a different
@@ -571,10 +577,11 @@ sub-agent is there to keep whole files out of the main context.
 
 The rest of the step is yours to run:
 
-- Every code block is a `<pre>`, or a styled element whose CSS sets
-  `white-space: pre` or `white-space: pre-wrap`. Scan each block in the HTML
-  source and confirm this; otherwise the browser collapses newlines onto one
-  line.
+- Every code block in the spec is a `<pre>` or a `.code-block`, whose CSS in
+  the rendered page sets `white-space: pre-wrap`. A custom styled div used
+  for code needs `white-space: pre` or `pre-wrap` in its own style attribute,
+  or the browser collapses newlines onto one line; scan any such div in the
+  spec.
 
 - Every code block is HTML-escaped: `&`, `<`, and `>` inside a `<pre>` or
   `<code>` block appear as `&amp;`, `&lt;`, `&gt;`, with the `.del` and `.add`
@@ -592,8 +599,15 @@ The rest of the step is yours to run:
 - Every table-of-contents link resolves to a section anchor on the page, and
   every section on the page appears in the table of contents.
 
-- Every unused template placeholder is deleted. A stray `FILL:` comment or an
-  empty diagram block ships as a blank box on the page.
+- No placeholder survives into the spec. A stray `FILL:` comment or an empty
+  diagram block ships as a blank box on the rendered page. This check is
+  mechanical:
+
+  ```bash
+  grep -n "FILL" "$work/spec.json"
+  ```
+
+  Expect no hits.
 
 - The quiz is not answerable without reading it. Count the words in every option
   and check two things: that no option in a question runs more than about a
@@ -608,7 +622,7 @@ The rest of the step is yours to run:
   Name the option by its content instead. This check is mechanical:
 
   ```bash
-  grep -nEi 'the (first|second|third|last) option|the (former|latter)' "$out"
+  grep -nEi 'the (first|second|third|last) option|the (former|latter)' "$page"
   ```
 
   Expect no hits inside the quiz section. Stating the rule is not enough on its
@@ -621,7 +635,7 @@ The rest of the step is yours to run:
   label and edge label is legible against what sits behind it.
 
 - The page is checked at 400px wide, and nothing scrolls sideways. A wide
-  comparison table is the usual cause. The template scrolls `table.vals` in its
+  comparison table is the usual cause. The page scrolls `table.vals` in its
   own box at narrow widths, so a table may overflow its container, but the
   document must not: `document.documentElement.scrollWidth` has to equal the
   viewport width.
@@ -641,34 +655,70 @@ The rest of the step is yours to run:
   command that produced it. A count is the easiest claim to get wrong and the
   easiest for a reader to check, and no other check on this list can catch it.
 
-### 8. Write the file
+### 8. Render the file
 
-Write to `$HOME/code-explanations/YYYY-MM-DD-<KEY>-explanation.html`, creating
-the directory if it does not exist:
+Write the finished content as a JSON spec named `spec.json` in the work
+directory step 1 created, then render it with the script beside this file.
+`<skill-dir>` is the directory this SKILL.md lives in:
 
 ```bash
-out="$HOME/code-explanations"
-mkdir -p "$out"
+page="$(python <skill-dir>/render.py "$work/spec.json")"
 ```
 
-Save it with a `.html` extension only: confirm the written file ends in
-`.html`, not `.html.txt`, so it opens as a rendered page rather than raw
-source. Report the path as the platform spells it, so a Git Bash user gets a
-path their file manager will open.
+The renderer validates the spec before writing anything, then writes
+`$HOME/code-explanations/YYYY-MM-DD-<KEY>-explanation.html`, creating the
+directory if it does not exist, and prints the path, captured here as
+`$page`. Report it as printed, so a Git Bash user gets a path their file
+manager will open.
 
-## Template
+Fix what a rejection names and re-run; do not hand-edit the written page to
+work around a validation error. The spec format is documented under Renderer
+below and in `render.py`'s docstring.
 
-Start from `html-template.html`, which carries the responsive layout, the
+## Renderer
+
+`render.py`, beside this file, turns a JSON spec into the finished page, so a
+run writes content, not scaffold. It carries the responsive layout, the
 sticky table of contents, light and dark color tokens, callout and code-block
-styles with the `white-space` rule already set, the three HTML and CSS diagram
-families, a `.filename` label for the path above a code block, a
+styles with the `white-space` rule already set, the three HTML and CSS
+diagram families, a `.filename` label for the path above a code block, a
 `table.vals` comparison table with `.yes` and `.no` cells, the `.mermaid`
 container style, a theme-aware non-blocking Mermaid loader, and the quiz
-interaction script. Fill in the content; do not rebuild the scaffold per run.
+interaction script.
 
-Each finished page carries its own copy of that scaffold, because the output must
-be self-contained. So a change to the template does not reach pages already
-written. When you change the template, decide whether the existing pages need
+The spec, in outline:
+
+```json
+{
+  "title": "One-line change title",
+  "lead": "One-sentence summary of what the change does.",
+  "provenance": "owner/repo PR 1234 at abc1234, explained 2026-09-01",
+  "key": "pr-1234",
+  "sections": [
+    {"id": "background", "heading": "Background", "html": "..."},
+    {"id": "intuition", "heading": "Intuition", "html": "..."},
+    {"id": "code", "heading": "Code walkthrough", "html": "..."}
+  ],
+  "quiz": [
+    {"question": "...", "options": [{"text": "...", "correct": false}], "feedback": "..."}
+  ]
+}
+```
+
+`sections[].html` and `quiz[].feedback` are raw HTML, so everything step 3
+and step 4 say about HTML-escaping code, diffs, and Mermaid sources applies
+to those two fields directly. Every other field is plain text; the renderer
+escapes it. The table of contents is built from the sections and the quiz, so
+every section appears in it by construction. The option order in the spec is
+the order in the raw HTML; the shuffle happens in the reader's browser on
+every load.
+
+The renderer rejects a spec that misses the contract, naming the JSON path
+that failed. The authoritative field rules live in `render.py`'s docstring.
+
+Each finished page carries its own copy of that scaffold, because the output
+must be self-contained. So a change to the renderer does not reach pages
+already written. When you change it, decide whether the existing pages need
 the same edit, and say so.
 
 The output is a read-only artifact the reader reads, not edits, so it must be

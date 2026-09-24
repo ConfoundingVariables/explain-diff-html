@@ -184,18 +184,21 @@ tests the prose against the writing rules in `SKILL.md`.
 ## Requirements
 
 <details markdown="1">
-<summary>git, gh, and node, plus what runs on which platform.</summary>
+<summary>git, gh, node, and python, plus what runs on which platform.</summary>
 
 | Tool   | Needed when                              | Used for                                               |
 | ------ | ---------------------------------------- | ------------------------------------------------------ |
 | `git`  | Every run                                | Resolving the base, fetching the ref, reading the diff |
 | `gh`   | Explaining a pull request                | Fetching the pull request title, body, and URL         |
 | `node` | Every run that carries a Mermaid diagram | Validating Mermaid sources in step 4, through `npx`    |
+| `python` | Every run                              | Rendering the finished page from the spec (`render.py`) |
 
 `gh` must be authenticated, not only installed. Check with `gh auth status`.
 
 Node is a build-time validator only. Nobody needs Node to open a finished page,
 because the reader's browser loads Mermaid from the CDN.
+
+`python` runs the renderer, standard library only, Python 3.8 or newer.
 
 The skill's commands are POSIX shell, so it runs on Linux and macOS directly,
 and on Windows through WSL or Git Bash. Windows PowerShell and `cmd.exe` are not
@@ -251,8 +254,8 @@ cp -R /tmp/edh/skills/explain-diff-html <your-repo>/.claude/skills/
 Those two paths are Claude Code's. Other agents read skills from their own
 directories. `npx skills add` finds the right one for you.
 
-The agent reads `SKILL.md` and, when it builds a page, `html-template.html`
-beside it. Those two files are the whole skill.
+The agent reads `SKILL.md` and, when it builds a page, `render.py` beside it.
+Those two files are the whole skill.
 
 Confirm the install with `npx skills list`, or by asking your agent to list its
 skills. `explain-diff-html` should appear with its description.
@@ -267,6 +270,10 @@ explain this diff
 walk me through this branch
 explain the changes between abc123 and def456
 ```
+
+In Claude Code this fork is user-invoked only (`disable-model-invocation` in
+the frontmatter), so run it as a skill command there rather than waiting for
+the phrasing to trigger it.
 
 It writes the page to a `code-explanations` folder in your home directory,
 `$HOME/code-explanations`, named
@@ -317,7 +324,8 @@ a motive.
    misses their own tells.
 7. Run the self-check, including re-reading every cited `file:line` at the
    target ref.
-8. Write the file.
+8. Render the page: write the content as a JSON spec and run `render.py`,
+   which validates it and writes the finished file.
 
 Step 7 carries two checks that exist because of past failures. It confirms
 every code block is HTML-escaped, because a single raw `<` in a pasted diff line
@@ -333,8 +341,8 @@ nothing.
 <details markdown="1">
 <summary>Colors, diagram families, and the pinned Mermaid version.</summary>
 
-Everything visual lives in `skills/explain-diff-html/html-template.html`, which
-the skill fills in rather than rebuilding per run:
+Everything visual lives in `skills/explain-diff-html/render.py`, as CSS and
+JavaScript constants the renderer writes into every page:
 
 - Colors are CSS custom properties at the top, in a light set and a dark set.
   Change the two blocks to match your own palette.
@@ -348,8 +356,9 @@ the skill fills in rather than rebuilding per run:
 - The output directory and the filename pattern are in `SKILL.md`, under the
   output contract.
 - Every page ends with a credit line: "Generated with explain-diff-html",
-  linked to this repository. Delete the `<footer class="colophon">` element to
-  remove it. The `.colophon` rules style nothing else, so delete those too.
+  linked to this repository. Delete the `<footer class="colophon">` element
+  in `render.py`'s page skeleton to remove it. The `.colophon` rules style
+  nothing else, so delete those too.
 
 </details>
 
